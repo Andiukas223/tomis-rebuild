@@ -1,0 +1,12 @@
+.git
+.gitignore
+.next
+node_modules
+npm-debug.log*
+README.md
+AGENTS.md
+CLAUDE.md
+coverage
+*.tsbuildinfo
+.env
+.env.*

@@ -1,0 +1,140 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { getServerSessionUser } from "@/lib/server-session";
+import { normalizeSystemInput, validateSystemInput } from "@/lib/system-input";
+
+type SystemRouteProps = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+type UpdateSystemBody = {
+  code?: string;
+  name?: string;
+  serialNumber?: string | null;
+  hospitalId?: string;
+  status?: string;
+};
+
+export async function GET(_: Request, { params }: SystemRouteProps) {
+  const user = await getServerSessionUser();
+
+  if (!user) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const system = await db.system.findFirst({
+    where: {
+      id,
+      organizationId: user.organizationId,
+    },
+    include: {
+      hospital: true,
+    },
+  });
+
+  if (!system) {
+    return NextResponse.json({ message: "Not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ system }, { status: 200 });
+}
+
+export async function PATCH(request: Request, { params }: SystemRouteProps) {
+  const user = await getServerSessionUser();
+
+  if (!user) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const existing = await db.system.findFirst({
+    where: {
+      id,
+      organizationId: user.organizationId,
+    },
+  });
+
+  if (!existing) {
+    return NextResponse.json({ message: "Not found" }, { status: 404 });
+  }
+
+  const body = (await request.json()) as UpdateSystemBody;
+  const input = normalizeSystemInput(body);
+  const validationError = validateSystemInput(input);
+
+  if (validationError) {
+    return NextResponse.json({ message: validationError }, { status: 400 });
+  }
+
+  const hospital = await db.hospital.findFirst({
+    where: {
+      id: input.hospitalId,
+      organizationId: user.organizationId,
+    },
+  });
+
+  if (!hospital) {
+    return NextResponse.json(
+      { message: "Selected hospital was not found." },
+      { status: 400 },
+    );
+  }
+
+  const duplicate = await db.system.findFirst({
+    where: {
+      code: input.code,
+      NOT: {
+        id,
+      },
+    },
+  });
+
+  if (duplicate) {
+    return NextResponse.json(
+      { message: "A system with this code already exists." },
+      { status: 409 },
+    );
+  }
+
+  const system = await db.system.update({
+    where: { id },
+    data: input,
+    include: {
+      hospital: true,
+    },
+  });
+
+  return NextResponse.json({ system }, { status: 200 });
+}
+
+export async function DELETE(_: Request, { params }: SystemRouteProps) {
+  const user = await getServerSessionUser();
+
+  if (!user) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const existing = await db.system.findFirst({
+    where: {
+      id,
+      organizationId: user.organizationId,
+    },
+  });
+
+  if (!existing) {
+    return NextResponse.json({ message: "Not found" }, { status: 404 });
+  }
+
+  await db.system.delete({
+    where: { id },
+  });
+
+  return NextResponse.json({ success: true }, { status: 200 });
+}
