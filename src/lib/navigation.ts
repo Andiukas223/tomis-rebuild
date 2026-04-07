@@ -36,6 +36,10 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Service",
     href: "/service",
     description: "Service operations, defect flows, contracts, and planning.",
+    children: [
+      { label: "Operations", href: "/service" },
+      { label: "Reports", href: "/service/reports" },
+    ],
   },
   {
     label: "Tasks",

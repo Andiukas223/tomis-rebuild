@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DeleteServiceCaseButton } from "@/components/service/delete-service-case-button";
+import { ServiceCaseAssigneeSelect } from "@/components/service/service-case-assignee-select";
 
 export type ServiceCaseTableItem = {
   id: string;
@@ -9,6 +10,7 @@ export type ServiceCaseTableItem = {
   systemCode: string;
   equipmentId: string | null;
   equipmentCode: string | null;
+  assignedUserId: string | null;
   assigneeName: string | null;
   taskProgressLabel: string;
   priority: string;
@@ -22,15 +24,22 @@ type ServiceCasesTableProps = {
     q: string;
     status: string;
     priority: string;
+    assigneeId: string;
+    scheduleWindow: string;
     systemId: string;
     equipmentId: string;
   };
+  assignees: {
+    id: string;
+    fullName: string;
+  }[];
   createHref?: string;
 };
 
 export function ServiceCasesTable({
   serviceCases,
   filters,
+  assignees,
   createHref = "/service/new",
 }: ServiceCasesTableProps) {
   return (
@@ -55,7 +64,7 @@ export function ServiceCasesTable({
 
       <form
         action="/service"
-        className="grid gap-4 border-b border-slate-200 px-6 py-4 lg:grid-cols-[minmax(0,1fr)_220px_220px_auto_auto]"
+        className="grid gap-4 border-b border-slate-200 px-6 py-4 lg:grid-cols-[minmax(0,1fr)_220px_220px_220px_220px_auto_auto]"
       >
         {filters.systemId ? (
           <input type="hidden" name="systemId" value={filters.systemId} />
@@ -93,6 +102,32 @@ export function ServiceCasesTable({
           <option value="Medium">Medium</option>
           <option value="High">High</option>
           <option value="Critical">Critical</option>
+        </select>
+        <select
+          aria-label="Filter service cases by technician"
+          name="assigneeId"
+          defaultValue={filters.assigneeId}
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none ring-0 transition focus:border-sky-400 focus:bg-white"
+        >
+          <option value="">All technicians</option>
+          <option value="unassigned">Unassigned</option>
+          {assignees.map((assignee) => (
+            <option key={assignee.id} value={assignee.id}>
+              {assignee.fullName}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Filter service cases by schedule window"
+          name="scheduleWindow"
+          defaultValue={filters.scheduleWindow}
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none ring-0 transition focus:border-sky-400 focus:bg-white"
+        >
+          <option value="">All schedules</option>
+          <option value="overdue">Overdue</option>
+          <option value="today">Today</option>
+          <option value="next7">Next 7 days</option>
+          <option value="unscheduled">Unscheduled</option>
         </select>
         <button
           type="submit"
@@ -161,7 +196,18 @@ export function ServiceCasesTable({
                       "N/A"
                     )}
                   </td>
-                  <td className="px-6 py-4">{item.assigneeName ?? "Unassigned"}</td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-slate-600">
+                        {item.assigneeName ?? "Unassigned"}
+                      </p>
+                      <ServiceCaseAssigneeSelect
+                        serviceCaseId={item.id}
+                        assignedUserId={item.assignedUserId}
+                        assignees={assignees}
+                      />
+                    </div>
+                  </td>
                   <td className="px-6 py-4">{item.taskProgressLabel}</td>
                   <td className="px-6 py-4">{item.priority}</td>
                   <td className="px-6 py-4">

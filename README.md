@@ -22,7 +22,7 @@ The rebuild now includes:
 - protected shell with sidebar, topbar, dashboard, and module routing
 - registry master data for hospitals, companies, and manufacturers
 - catalog modules for systems, products, and equipment
-- service operations with assignment, task checklists, attachments, and notes
+- service operations with assignment, task checklists, attachments, notes, completion records, dispatch actions, and reporting
 - organization-scoped APIs and server-rendered detail pages
 
 Planning and reverse-engineering notes live one level above this app in the parent workspace documentation.
@@ -88,15 +88,19 @@ Planning and reverse-engineering notes live one level above this app in the pare
 ### Service
 
 - `/service`
+- `/service/reports`
 - `/service/new`
 - `/service/[id]`
 - `/service/[id]/edit`
 - `/api/service-cases`
 - `/api/service-cases/[id]`
+- `/api/service-cases/[id]/assignment`
+- `/api/service-cases/[id]/completion`
 - `/api/service-cases/[id]/status`
 - `/api/service-cases/[id]/attachments`
 - `/api/service-cases/[id]/attachments/[attachmentId]`
 - `/api/service-cases/[id]/notes`
+- `/api/service-cases/[id]/notes/[noteId]`
 - `/api/service-cases/export`
 - `/api/service-tasks/[id]`
 
@@ -117,6 +121,7 @@ The current Prisma schema includes:
 - `ServiceTask`
 - `ServiceAttachment`
 - `ServiceNote`
+- `ServiceAssignmentEvent`
 
 Key relationships:
 
@@ -125,6 +130,7 @@ Key relationships:
 - `Equipment` references `Manufacturer` and can link to `System`
 - `ServiceCase` references `System`, optional `Equipment`, and optional assigned `User`
 - `ServiceTask`, `ServiceAttachment`, and `ServiceNote` all belong to `ServiceCase`
+- `ServiceAssignmentEvent` captures assignment ownership changes for `ServiceCase`
 
 ## Local Setup
 
@@ -201,11 +207,11 @@ docker compose up -d db
 
 Recommended next implementation slices:
 
-1. service note editing, deletion, and cleaner activity timeline rules
-2. technician workload planning on dashboard and service list
-3. deeper operational workflows around service scheduling and execution
-4. stronger role and permission enforcement
-5. test coverage for auth and critical CRUD flows
+1. grouped KPI views and deeper slicing on service reports
+2. generated operational report output or printable summaries
+3. stronger role and permission enforcement
+4. test coverage for auth and critical service/catalog flows
+5. broader module expansion beyond service, catalog, and registry
 
 ## Notes
 
@@ -213,3 +219,4 @@ Recommended next implementation slices:
 - `.env.example` is safe to commit; real `.env` values should stay local
 - service attachments persist under `storage/service-attachments`
 - linked registry records are protected from destructive actions when in active use
+- service reporting now supports technician, status, and date-range filtered review plus matching CSV export

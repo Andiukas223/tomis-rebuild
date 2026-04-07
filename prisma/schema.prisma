@@ -37,6 +37,7 @@ model User {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   assignedServiceCases ServiceCase[] @relation("ServiceCaseAssignee")
+  serviceAssignmentEvents ServiceAssignmentEvent[] @relation("ServiceAssignmentChangedBy")
   serviceNotes            ServiceNote[] @relation("ServiceNoteAuthor")
   uploadedServiceAttachments ServiceAttachment[] @relation("ServiceAttachmentUploader")
   sessions             Session[]
@@ -178,6 +179,10 @@ model ServiceCase {
   code           String   @unique
   title          String
   summary        String?
+  workPerformed  String?
+  resolution     String?
+  followUpRequired Boolean @default(false)
+  followUpActions String?
   status         String
   priority       String
   scheduledAt    DateTime?
@@ -194,6 +199,7 @@ model ServiceCase {
   equipment    Equipment?     @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
   assignedUser User?          @relation("ServiceCaseAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
   attachments  ServiceAttachment[]
+  assignmentEvents ServiceAssignmentEvent[]
   notes        ServiceNote[]
   tasks        ServiceTask[]
 
@@ -204,6 +210,24 @@ model ServiceCase {
   @@index([status])
   @@index([priority])
   @@index([scheduledAt])
+}
+
+model ServiceAssignmentEvent {
+  id                 String   @id @default(cuid())
+  serviceCaseId      String
+  changedById        String?
+  previousAssigneeId String?
+  previousAssigneeName String?
+  newAssigneeId      String?
+  newAssigneeName    String?
+  createdAt          DateTime @default(now())
+
+  serviceCase ServiceCase @relation(fields: [serviceCaseId], references: [id], onDelete: Cascade)
+  changedBy   User?       @relation("ServiceAssignmentChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([serviceCaseId])
+  @@index([changedById])
+  @@index([createdAt])
 }
 
 model ServiceTask {

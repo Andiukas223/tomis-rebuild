@@ -6,8 +6,10 @@ import { PageHeader } from "@/components/app/page-header";
 import { DeleteServiceAttachmentButton } from "@/components/service/delete-service-attachment-button";
 import { DeleteServiceCaseButton } from "@/components/service/delete-service-case-button";
 import { ServiceAttachmentUploadForm } from "@/components/service/service-attachment-upload-form";
+import { ServiceCaseCompletionForm } from "@/components/service/service-case-completion-form";
 import { ServiceCaseStatusActions } from "@/components/service/service-case-status-actions";
 import { ServiceNoteForm } from "@/components/service/service-note-form";
+import { ServiceNoteItem } from "@/components/service/service-note-item";
 import { ServiceTaskToggle } from "@/components/service/service-task-toggle";
 import { getAttachmentSizeLabel } from "@/lib/service-attachments";
 
@@ -16,6 +18,40 @@ type ServiceCaseDetailPageProps = {
     id: string;
   }>;
 };
+
+type ActivityEntry =
+  | {
+      id: string;
+      kind: "case";
+      createdAt: Date;
+      title: string;
+      description: string;
+      meta: string;
+    }
+  | {
+      id: string;
+      kind: "note";
+      createdAt: Date;
+      title: string;
+      description: string;
+      meta: string;
+    }
+  | {
+      id: string;
+      kind: "attachment";
+      createdAt: Date;
+      title: string;
+      description: string;
+      meta: string;
+    }
+  | {
+      id: string;
+      kind: "assignment";
+      createdAt: Date;
+      title: string;
+      description: string;
+      meta: string;
+    };
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +83,12 @@ export default async function ServiceCaseDetailPage({
         },
       },
       assignedUser: true,
+      assignmentEvents: {
+        orderBy: [{ createdAt: "desc" }],
+        include: {
+          changedBy: true,
+        },
+      },
       attachments: {
         orderBy: [{ createdAt: "desc" }],
         include: {
@@ -69,12 +111,53 @@ export default async function ServiceCaseDetailPage({
     notFound();
   }
 
+  const completedTaskCount = serviceCase.tasks.filter(
+    (task) => task.isCompleted,
+  ).length;
+
+  const activityEntries: ActivityEntry[] = [
+    {
+      id: `case-${serviceCase.id}`,
+      kind: "case" as const,
+      createdAt: serviceCase.createdAt,
+      title: "Service case created",
+      description: `${serviceCase.code} was opened with status ${serviceCase.status} and priority ${serviceCase.priority}.`,
+      meta: serviceCase.createdAt.toLocaleString(),
+    },
+    ...serviceCase.notes.map((note) => ({
+      id: `note-${note.id}`,
+      kind: "note" as const,
+      createdAt: note.createdAt,
+      title: "Internal note",
+      description: note.body,
+      meta: `${note.author ? note.author.fullName : "Unknown author"} - ${note.createdAt.toLocaleString()}`,
+    })),
+    ...serviceCase.attachments.map((attachment) => ({
+      id: `attachment-${attachment.id}`,
+      kind: "attachment" as const,
+      createdAt: attachment.createdAt,
+      title: "Attachment added",
+      description: attachment.fileName,
+      meta: `${attachment.uploadedBy ? attachment.uploadedBy.fullName : "Unknown uploader"} - ${attachment.createdAt.toLocaleString()}`,
+    })),
+    ...serviceCase.assignmentEvents.map((event) => ({
+      id: `assignment-${event.id}`,
+      kind: "assignment" as const,
+      createdAt: event.createdAt,
+      title: "Technician assignment updated",
+      description: event.newAssigneeName
+        ? `Assignment changed from ${event.previousAssigneeName ?? "Unassigned"} to ${event.newAssigneeName}.`
+        : `Assignment cleared from ${event.previousAssigneeName ?? "Unknown technician"}.`,
+      meta: `${event.changedBy ? event.changedBy.fullName : "System"} - ${event.createdAt.toLocaleString()}`,
+    })),
+  ].sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime());
+
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Service"
         title={serviceCase.title}
-        description="Operational service detail view connected to the system backbone, technician assignment, task execution, notes, and stored service evidence."
+        description="Operational service detail view connected to the system backbone, technician assignment, task execution, notes, timeline history, stored evidence, and case completion records."
         actions={
           <>
             <Link
@@ -125,7 +208,7 @@ export default async function ServiceCaseDetailPage({
           </p>
           <p className="mt-3 text-sm font-medium text-slate-950">
             {serviceCase.assignedUser
-              ? `${serviceCase.assignedUser.fullName} · ${serviceCase.assignedUser.role}`
+              ? `${serviceCase.assignedUser.fullName} - ${serviceCase.assignedUser.role}`
               : "Unassigned"}
           </p>
         </article>
@@ -141,10 +224,10 @@ export default async function ServiceCaseDetailPage({
         </article>
         <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Notes
+            Activity items
           </p>
           <p className="mt-3 text-2xl font-semibold text-slate-950">
-            {serviceCase.notes.length}
+            {activityEntries.length}
           </p>
         </article>
       </section>
@@ -176,12 +259,12 @@ export default async function ServiceCaseDetailPage({
                 href={`/catalog/systems/${serviceCase.system.id}`}
                 className="mt-2 block font-medium text-sky-700 hover:underline"
               >
-                {serviceCase.system.code} · {serviceCase.system.name}
+                {serviceCase.system.code} - {serviceCase.system.name}
               </Link>
               <p className="mt-1">
                 {serviceCase.system.hospital.name}
                 {serviceCase.system.hospital.city
-                  ? ` · ${serviceCase.system.hospital.city}`
+                  ? ` - ${serviceCase.system.hospital.city}`
                   : ""}
               </p>
             </div>
@@ -196,7 +279,7 @@ export default async function ServiceCaseDetailPage({
                     href={`/catalog/equipment/${serviceCase.equipment.id}`}
                     className="mt-2 block font-medium text-sky-700 hover:underline"
                   >
-                    {serviceCase.equipment.code} · {serviceCase.equipment.name}
+                    {serviceCase.equipment.code} - {serviceCase.equipment.name}
                   </Link>
                   <p className="mt-1">{serviceCase.equipment.manufacturer.name}</p>
                 </>
@@ -212,12 +295,67 @@ export default async function ServiceCaseDetailPage({
         <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
           <div className="flex items-start justify-between gap-4">
             <div>
+              <h3 className="text-lg font-semibold text-slate-950">
+                Completion record
+              </h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Capture what was done, the case outcome, and any required follow-up work.
+              </p>
+            </div>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              {serviceCase.completedAt
+                ? `Completed ${serviceCase.completedAt.toLocaleString()}`
+                : "Open completion record"}
+            </span>
+          </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Work performed
+              </p>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-600">
+                {serviceCase.workPerformed ?? "No work log has been recorded yet."}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Resolution
+              </p>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-600">
+                {serviceCase.resolution ?? "No resolution has been recorded yet."}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            <p className="font-medium text-slate-900">
+              Follow-up required: {serviceCase.followUpRequired ? "Yes" : "No"}
+            </p>
+            <p className="mt-2 whitespace-pre-wrap">
+              {serviceCase.followUpRequired
+                ? serviceCase.followUpActions ?? "No follow-up plan has been written yet."
+                : "No follow-up work is currently scheduled."}
+            </p>
+          </div>
+          <div className="mt-5">
+            <ServiceCaseCompletionForm
+              serviceCaseId={serviceCase.id}
+              initialValues={{
+                workPerformed: serviceCase.workPerformed ?? "",
+                resolution: serviceCase.resolution ?? "",
+                followUpRequired: serviceCase.followUpRequired,
+                followUpActions: serviceCase.followUpActions ?? "",
+              }}
+            />
+          </div>
+        </article>
+
+        <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
               <h3 className="text-lg font-semibold text-slate-950">Task checklist</h3>
               <p className="mt-1 text-sm text-slate-600">
-                Progress can now be tracked task by task directly from the service case.
-                {" "}
-                {serviceCase.tasks.filter((task) => task.isCompleted).length}/
-                {serviceCase.tasks.length} complete.
+                Progress can now be tracked task by task directly from the service case.{" "}
+                {completedTaskCount}/{serviceCase.tasks.length} complete.
               </p>
             </div>
             <Link
@@ -259,7 +397,9 @@ export default async function ServiceCaseDetailPage({
             )}
           </div>
         </article>
+      </section>
 
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -280,77 +420,121 @@ export default async function ServiceCaseDetailPage({
               </p>
             ) : (
               serviceCase.notes.map((note) => (
-                <div
+                <ServiceNoteItem
                   key={note.id}
-                  className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
-                >
-                  <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
-                    {note.body}
-                  </p>
-                  <p className="mt-3 text-xs text-slate-500">
-                    {note.author ? note.author.fullName : "Unknown author"}
-                    {" · "}
-                    {note.createdAt.toLocaleString()}
-                  </p>
-                </div>
+                  serviceCaseId={serviceCase.id}
+                  note={{
+                    id: note.id,
+                    body: note.body,
+                    createdAtLabel: note.createdAt.toLocaleString(),
+                    updatedAtLabel: note.updatedAt.toLocaleString(),
+                    authorName: note.author ? note.author.fullName : "Unknown author",
+                    isEdited:
+                      note.updatedAt.getTime() - note.createdAt.getTime() > 1000,
+                  }}
+                />
               ))
             )}
           </div>
         </article>
+
+        <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">Activity timeline</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                A single chronological view of case creation, note updates, and attachment activity.
+              </p>
+            </div>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              {activityEntries.length} events
+            </span>
+          </div>
+          <div className="mt-5 space-y-4">
+            {activityEntries.map((entry) => (
+              <div
+                key={entry.id}
+                className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      entry.kind === "case"
+                        ? "bg-slate-900 text-white"
+                        : entry.kind === "note"
+                          ? "bg-sky-100 text-sky-700"
+                          : entry.kind === "attachment"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-emerald-100 text-emerald-700"
+                    }`}
+                  >
+                    {entry.kind === "case"
+                      ? "Case"
+                      : entry.kind === "note"
+                        ? "Note"
+                        : entry.kind === "attachment"
+                          ? "Attachment"
+                          : "Assignment"}
+                  </span>
+                  <p className="text-sm font-semibold text-slate-950">{entry.title}</p>
+                </div>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                  {entry.description}
+                </p>
+                <p className="mt-3 text-xs text-slate-500">{entry.meta}</p>
+              </div>
+            ))}
+          </div>
+        </article>
       </section>
 
-      <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-950">
-              Service attachments
-            </h3>
-            <p className="mt-1 text-sm text-slate-600">
-              Upload photos, reports, signed sheets, or vendor files so the
-              service history stays with the case.
-            </p>
-            <div className="mt-5 space-y-3">
-              {serviceCase.attachments.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
-                  No attachments uploaded yet.
-                </p>
-              ) : (
-                serviceCase.attachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 md:flex-row md:items-center md:justify-between"
-                  >
-                    <div>
-                      <a
-                        href={`/api/service-cases/${serviceCase.id}/attachments/${attachment.id}`}
-                        className="text-sm font-semibold text-sky-700 hover:underline"
-                      >
-                        {attachment.fileName}
-                      </a>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {getAttachmentSizeLabel(attachment.sizeBytes)}
-                        {" · "}
-                        Uploaded {attachment.createdAt.toLocaleString()}
-                        {" · "}
-                        {attachment.uploadedBy
-                          ? attachment.uploadedBy.fullName
-                          : "Unknown uploader"}
-                      </p>
-                    </div>
-                    <DeleteServiceAttachmentButton
-                      serviceCaseId={serviceCase.id}
-                      attachmentId={attachment.id}
-                    />
+      <section>
+        <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+          <h3 className="text-lg font-semibold text-slate-950">
+            Service attachments
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Upload photos, reports, signed sheets, or vendor files so the service history stays with the case.
+          </p>
+          <div className="mt-5 space-y-3">
+            {serviceCase.attachments.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+                No attachments uploaded yet.
+              </p>
+            ) : (
+              serviceCase.attachments.map((attachment) => (
+                <div
+                  key={attachment.id}
+                  className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 md:flex-row md:items-center md:justify-between"
+                >
+                  <div>
+                    <a
+                      href={`/api/service-cases/${serviceCase.id}/attachments/${attachment.id}`}
+                      className="text-sm font-semibold text-sky-700 hover:underline"
+                    >
+                      {attachment.fileName}
+                    </a>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {getAttachmentSizeLabel(attachment.sizeBytes)} - Uploaded{" "}
+                      {attachment.createdAt.toLocaleString()} -{" "}
+                      {attachment.uploadedBy
+                        ? attachment.uploadedBy.fullName
+                        : "Unknown uploader"}
+                    </p>
                   </div>
-                ))
-              )}
-            </div>
+                  <DeleteServiceAttachmentButton
+                    serviceCaseId={serviceCase.id}
+                    attachmentId={attachment.id}
+                  />
+                </div>
+              ))
+            )}
           </div>
 
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5">
+          <div className="mt-6 rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5">
             <ServiceAttachmentUploadForm serviceCaseId={serviceCase.id} />
           </div>
-        </div>
+        </article>
       </section>
     </div>
   );

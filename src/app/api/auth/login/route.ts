@@ -60,6 +60,7 @@ export async function POST(request: Request) {
   });
 
   const sessionUser = toSessionUser({
+    id: user.id,
     fullName: user.fullName,
     role: user.role,
     organizationId: user.organizationId,

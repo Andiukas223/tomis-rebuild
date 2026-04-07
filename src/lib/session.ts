@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 export type SessionUser = {
+  id: string;
   name: string;
   role: string;
   organizationId: string;
@@ -72,12 +73,14 @@ export function createSessionToken() {
 }
 
 export function toSessionUser(input: {
+  id: string;
   fullName: string;
   role: string;
   organizationId: string;
   organizationName: string;
 }) {
   return {
+    id: input.id,
     name: input.fullName,
     role: input.role,
     organizationId: input.organizationId,

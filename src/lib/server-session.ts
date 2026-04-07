@@ -43,6 +43,7 @@ export async function getServerSessionUser() {
   }
 
   return toSessionUser({
+    id: session.user.id,
     fullName: session.user.fullName,
     role: session.user.role,
     organizationId: session.user.organizationId,

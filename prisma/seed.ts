@@ -382,6 +382,10 @@ async function main() {
       title: "Quarterly preventive maintenance",
       summary:
         "Complete routine checks, calibration review, and service log update for the ultrasound system.",
+      workPerformed: null,
+      resolution: null,
+      followUpRequired: false,
+      followUpActions: null,
       status: "Planned",
       priority: "Medium",
       scheduledAt: "2026-04-15T09:00:00.000Z",
@@ -406,6 +410,13 @@ async function main() {
       title: "Injector alarm diagnostics",
       summary:
         "Investigate intermittent pressure alarm and verify injector console stability before next patient use.",
+      workPerformed:
+        "Reviewed alarm logs, reproduced the issue after a warm restart, and completed a controlled injector load test.",
+      resolution:
+        "Pressure alarm threshold drift was corrected and the console was returned to stable operation.",
+      followUpRequired: true,
+      followUpActions:
+        "Recheck injector alarm behavior after the next 30 operating hours.",
       status: "In Progress",
       priority: "High",
       scheduledAt: "2026-04-08T07:30:00.000Z",
@@ -430,6 +441,11 @@ async function main() {
       title: "Endoscopy video output verification",
       summary:
         "Validate video chain after reported signal drop and confirm image output on the clinical display.",
+      workPerformed: null,
+      resolution: null,
+      followUpRequired: true,
+      followUpActions:
+        "Confirm on-site cable swap and prepare escalation package if the signal loss repeats.",
       status: "Open",
       priority: "Critical",
       scheduledAt: null,
@@ -475,6 +491,10 @@ async function main() {
       update: {
         title: serviceCase.title,
         summary: serviceCase.summary,
+        workPerformed: serviceCase.workPerformed,
+        resolution: serviceCase.resolution,
+        followUpRequired: serviceCase.followUpRequired,
+        followUpActions: serviceCase.followUpActions,
         status: serviceCase.status,
         priority: serviceCase.priority,
         scheduledAt: serviceCase.scheduledAt
@@ -492,6 +512,10 @@ async function main() {
         code: serviceCase.code,
         title: serviceCase.title,
         summary: serviceCase.summary,
+        workPerformed: serviceCase.workPerformed,
+        resolution: serviceCase.resolution,
+        followUpRequired: serviceCase.followUpRequired,
+        followUpActions: serviceCase.followUpActions,
         status: serviceCase.status,
         priority: serviceCase.priority,
         scheduledAt: serviceCase.scheduledAt

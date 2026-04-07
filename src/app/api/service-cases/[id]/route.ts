@@ -16,6 +16,10 @@ type UpdateServiceCaseBody = {
   code?: string;
   title?: string;
   summary?: string | null;
+  workPerformed?: string | null;
+  resolution?: string | null;
+  followUpRequired?: boolean;
+  followUpActions?: string | null;
   status?: string;
   priority?: string;
   scheduledAt?: string | null;
@@ -179,6 +183,10 @@ export async function PATCH(request: Request, { params }: ServiceCaseRouteProps)
       code: input.code,
       title: input.title,
       summary: input.summary,
+      workPerformed: input.workPerformed,
+      resolution: input.resolution,
+      followUpRequired: input.followUpRequired,
+      followUpActions: input.followUpActions,
       status: input.status,
       priority: input.priority,
       scheduledAt: input.scheduledAt ? new Date(input.scheduledAt) : null,

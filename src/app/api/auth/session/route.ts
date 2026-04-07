@@ -36,6 +36,7 @@ export async function GET() {
   return NextResponse.json(
     {
       user: toSessionUser({
+        id: session.user.id,
         fullName: session.user.fullName,
         role: session.user.role,
         organizationId: session.user.organizationId,

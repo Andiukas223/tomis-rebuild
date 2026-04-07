@@ -2,6 +2,10 @@ export type ServiceCaseInput = {
   code: string;
   title: string;
   summary: string | null;
+  workPerformed: string | null;
+  resolution: string | null;
+  followUpRequired: boolean;
+  followUpActions: string | null;
   status: string;
   priority: string;
   scheduledAt: string | null;
@@ -20,6 +24,10 @@ export function normalizeServiceCaseInput(input: {
   code?: string;
   title?: string;
   summary?: string | null;
+  workPerformed?: string | null;
+  resolution?: string | null;
+  followUpRequired?: boolean;
+  followUpActions?: string | null;
   status?: string;
   priority?: string;
   scheduledAt?: string | null;
@@ -37,6 +45,10 @@ export function normalizeServiceCaseInput(input: {
     code: input.code?.trim().toUpperCase() ?? "",
     title: input.title?.trim() ?? "",
     summary: input.summary?.trim() || null,
+    workPerformed: input.workPerformed?.trim() || null,
+    resolution: input.resolution?.trim() || null,
+    followUpRequired: Boolean(input.followUpRequired),
+    followUpActions: input.followUpActions?.trim() || null,
     status: input.status?.trim() || "Open",
     priority: input.priority?.trim() || "Medium",
     scheduledAt: input.scheduledAt?.trim() || null,
@@ -87,6 +99,10 @@ export function validateServiceCaseInput(input: ServiceCaseInput) {
 
   if (input.completedAt && Number.isNaN(Date.parse(input.completedAt))) {
     return "Completed date is invalid.";
+  }
+
+  if (input.followUpRequired && !input.followUpActions) {
+    return "Follow-up actions are required when follow-up is marked as needed.";
   }
 
   if (input.tasks.some((task) => !task.title)) {

@@ -17,16 +17,39 @@ export async function GET(request: Request) {
   const q = url.searchParams.get("q")?.trim() ?? "";
   const status = url.searchParams.get("status")?.trim() ?? "";
   const priority = url.searchParams.get("priority")?.trim() ?? "";
+  const assigneeId = url.searchParams.get("assigneeId")?.trim() ?? "";
+  const dateFrom = url.searchParams.get("dateFrom")?.trim() ?? "";
+  const dateTo = url.searchParams.get("dateTo")?.trim() ?? "";
   const systemId = url.searchParams.get("systemId")?.trim() ?? "";
   const equipmentId = url.searchParams.get("equipmentId")?.trim() ?? "";
+  const createdAtFilter = {
+    ...(dateFrom
+      ? {
+          gte: new Date(`${dateFrom}T00:00:00.000Z`),
+        }
+      : {}),
+    ...(dateTo
+      ? {
+          lt: new Date(`${dateTo}T23:59:59.999Z`),
+        }
+      : {}),
+  };
 
   const serviceCases = await db.serviceCase.findMany({
     where: {
       organizationId: user.organizationId,
       ...(status && status !== "all" ? { status } : {}),
       ...(priority && priority !== "all" ? { priority } : {}),
+      ...(assigneeId === "unassigned"
+        ? { assignedUserId: null }
+        : assigneeId
+          ? { assignedUserId: assigneeId }
+          : {}),
       ...(systemId ? { systemId } : {}),
       ...(equipmentId ? { equipmentId } : {}),
+      ...(Object.keys(createdAtFilter).length > 0
+        ? { createdAt: createdAtFilter }
+        : {}),
       ...(q
         ? {
             OR: [
@@ -68,6 +91,11 @@ export async function GET(request: Request) {
           code: true,
         },
       },
+      assignedUser: {
+        select: {
+          fullName: true,
+        },
+      },
     },
   });
 
@@ -77,6 +105,7 @@ export async function GET(request: Request) {
       "Title",
       "System",
       "Equipment",
+      "Technician",
       "Priority",
       "Status",
       "Scheduled At",
@@ -90,6 +119,7 @@ export async function GET(request: Request) {
       item.title,
       item.system.code,
       item.equipment?.code ?? "",
+      item.assignedUser?.fullName ?? "",
       item.priority,
       item.status,
       item.scheduledAt?.toISOString() ?? "",
