@@ -62,6 +62,12 @@ async function main() {
       fullName: "Ieva Grigaite",
       role: "Service Coordinator",
     },
+    {
+      username: "ritag",
+      email: "rita@tradintek.local",
+      fullName: "Rita Giedraite",
+      role: "Operations Viewer",
+    },
   ];
 
   for (const serviceUser of serviceUsers) {
@@ -394,9 +400,24 @@ async function main() {
       equipmentCode: "EQ-2001",
       assignedUsername: "marius",
       tasks: [
-        "Review maintenance history",
-        "Run probe calibration",
-        "Update service report",
+        {
+          title: "Review maintenance history",
+          assignedUsername: "marius",
+          dueAt: "2026-04-14T10:00:00.000Z",
+          notes: "Confirm the previous preventive maintenance log before site arrival.",
+        },
+        {
+          title: "Run probe calibration",
+          assignedUsername: "marius",
+          dueAt: "2026-04-15T09:45:00.000Z",
+          notes: "Use the approved calibration profile for the current probe set.",
+        },
+        {
+          title: "Update service report",
+          assignedUsername: "ievag",
+          dueAt: "2026-04-15T13:00:00.000Z",
+          notes: "Capture final readings and service summary for handoff.",
+        },
       ],
       notes: [
         {
@@ -425,9 +446,24 @@ async function main() {
       equipmentCode: "EQ-2002",
       assignedUsername: "marius",
       tasks: [
-        "Inspect pressure alarm logs",
-        "Test injector console under load",
-        "Confirm release to clinical use",
+        {
+          title: "Inspect pressure alarm logs",
+          assignedUsername: "marius",
+          dueAt: "2026-04-08T08:00:00.000Z",
+          notes: "Export event history before cycling power.",
+        },
+        {
+          title: "Test injector console under load",
+          assignedUsername: "marius",
+          dueAt: "2026-04-08T10:30:00.000Z",
+          notes: "Validate alarm threshold behavior after warm restart.",
+        },
+        {
+          title: "Confirm release to clinical use",
+          assignedUsername: "ievag",
+          dueAt: "2026-04-08T14:00:00.000Z",
+          notes: "Notify radiology coordinator once the load test passes.",
+        },
       ],
       notes: [
         {
@@ -454,9 +490,24 @@ async function main() {
       equipmentCode: "EQ-2003",
       assignedUsername: "ievag",
       tasks: [
-        "Validate video output chain",
-        "Check display cable and connectors",
-        "Document findings for escalation",
+        {
+          title: "Validate video output chain",
+          assignedUsername: "marius",
+          dueAt: "2026-04-07T11:00:00.000Z",
+          notes: "Check signal handoff between processor and display.",
+        },
+        {
+          title: "Check display cable and connectors",
+          assignedUsername: "marius",
+          dueAt: "2026-04-07T12:00:00.000Z",
+          notes: "Bring the spare cable kit to the first visit.",
+        },
+        {
+          title: "Document findings for escalation",
+          assignedUsername: "ievag",
+          dueAt: "2026-04-07T16:00:00.000Z",
+          notes: "Prepare vendor escalation package if the issue repeats.",
+        },
       ],
       notes: [
         {
@@ -541,15 +592,24 @@ async function main() {
       },
     });
 
-    await db.serviceTask.createMany({
-      data: serviceCase.tasks.map((title, index) => ({
-        title,
-        sortOrder: index,
-        isCompleted: false,
-        completedAt: null,
-        serviceCaseId: persistedCase.id,
-      })),
-    });
+    for (const [index, task] of serviceCase.tasks.entries()) {
+      const assignedTaskUser = await db.user.findUniqueOrThrow({
+        where: { username: task.assignedUsername },
+      });
+
+      await db.serviceTask.create({
+        data: {
+          title: task.title,
+          notes: task.notes,
+          sortOrder: index,
+          isCompleted: false,
+          completedAt: null,
+          dueAt: new Date(task.dueAt),
+          assignedUserId: assignedTaskUser.id,
+          serviceCaseId: persistedCase.id,
+        },
+      });
+    }
 
     await db.serviceNote.deleteMany({
       where: {

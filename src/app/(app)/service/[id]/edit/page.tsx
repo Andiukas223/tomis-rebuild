@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
+import { RestrictedAccess } from "@/components/app/restricted-access";
 import {
   ServiceCaseForm,
   type ServiceCaseFormValues,
@@ -31,6 +33,16 @@ export default async function EditServiceCasePage({
 
   if (!user) {
     notFound();
+  }
+
+  if (!hasCapability(user, "service.manage")) {
+    return (
+      <RestrictedAccess
+        eyebrow="Service"
+        title="Edit service case"
+        description="Only service users with case management access can update service work."
+      />
+    );
   }
 
   const { id } = await params;
@@ -107,9 +119,20 @@ export default async function EditServiceCasePage({
       serviceCase.tasks.length > 0
         ? serviceCase.tasks.map((task) => ({
             title: task.title,
+            notes: task.notes ?? "",
             isCompleted: task.isCompleted,
+            dueAt: formatDateTimeLocal(task.dueAt),
+            assignedUserId: task.assignedUserId ?? "",
           }))
-        : [{ title: "", isCompleted: false }],
+        : [
+            {
+              title: "",
+              notes: "",
+              isCompleted: false,
+              dueAt: "",
+              assignedUserId: "",
+            },
+          ],
   };
 
   return (

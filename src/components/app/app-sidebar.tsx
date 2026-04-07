@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navigationGroups } from "@/lib/navigation";
-import { useAuth } from "@/lib/auth";
+import type { NavigationGroup } from "@/lib/navigation";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") {
@@ -13,9 +12,16 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  organizationName: string | null;
+  navigationGroups: NavigationGroup[];
+};
+
+export function AppSidebar({
+  organizationName,
+  navigationGroups,
+}: AppSidebarProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
 
   return (
     <aside className="border-r border-slate-200/80 bg-slate-950 text-slate-100">
@@ -25,7 +31,7 @@ export function AppSidebar() {
             Organization
           </p>
           <div className="mt-3 rounded-2xl bg-white/10 px-4 py-3 text-sm font-medium text-white">
-            {user?.organizationName ?? "No organization selected"}
+            {organizationName ?? "No organization selected"}
           </div>
         </div>
 

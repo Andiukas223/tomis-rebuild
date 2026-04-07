@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
+import { RestrictedAccess } from "@/components/app/restricted-access";
 import { DeleteServiceAttachmentButton } from "@/components/service/delete-service-attachment-button";
 import { DeleteServiceCaseButton } from "@/components/service/delete-service-case-button";
 import { ServiceAttachmentUploadForm } from "@/components/service/service-attachment-upload-form";
@@ -10,7 +12,7 @@ import { ServiceCaseCompletionForm } from "@/components/service/service-case-com
 import { ServiceCaseStatusActions } from "@/components/service/service-case-status-actions";
 import { ServiceNoteForm } from "@/components/service/service-note-form";
 import { ServiceNoteItem } from "@/components/service/service-note-item";
-import { ServiceTaskToggle } from "@/components/service/service-task-toggle";
+import { ServiceTaskExecutionCard } from "@/components/service/service-task-execution-card";
 import { getAttachmentSizeLabel } from "@/lib/service-attachments";
 
 type ServiceCaseDetailPageProps = {
@@ -64,6 +66,18 @@ export default async function ServiceCaseDetailPage({
     notFound();
   }
 
+  if (!hasCapability(user, "service.view")) {
+    return (
+      <RestrictedAccess
+        eyebrow="Service"
+        title="Service case detail"
+        description="Your role does not have access to service case records."
+      />
+    );
+  }
+
+  const canManageService = hasCapability(user, "service.manage");
+
   const { id } = await params;
 
   const serviceCase = await db.serviceCase.findFirst({
@@ -103,6 +117,9 @@ export default async function ServiceCaseDetailPage({
       },
       tasks: {
         orderBy: [{ sortOrder: "asc" }],
+        include: {
+          assignedUser: true,
+        },
       },
     },
   });
@@ -111,8 +128,26 @@ export default async function ServiceCaseDetailPage({
     notFound();
   }
 
+  const assignees = await db.user.findMany({
+    where: {
+      organizationId: user.organizationId,
+      isActive: true,
+    },
+    orderBy: [{ fullName: "asc" }],
+    select: {
+      id: true,
+      fullName: true,
+    },
+  });
+
   const completedTaskCount = serviceCase.tasks.filter(
     (task) => task.isCompleted,
+  ).length;
+  const scheduledTaskCount = serviceCase.tasks.filter(
+    (task) => task.dueAt && !task.isCompleted,
+  ).length;
+  const assignedTaskCount = serviceCase.tasks.filter(
+    (task) => Boolean(task.assignedUserId),
   ).length;
 
   const activityEntries: ActivityEntry[] = [
@@ -166,13 +201,15 @@ export default async function ServiceCaseDetailPage({
             >
               Back to service
             </Link>
-            <Link
-              href={`/service/${serviceCase.id}/edit`}
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-            >
-              Edit case
-            </Link>
-            <DeleteServiceCaseButton id={serviceCase.id} />
+            {canManageService ? (
+              <Link
+                href={`/service/${serviceCase.id}/edit`}
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+              >
+                Edit case
+              </Link>
+            ) : null}
+            {canManageService ? <DeleteServiceCaseButton id={serviceCase.id} /> : null}
           </>
         }
       />
@@ -241,10 +278,12 @@ export default async function ServiceCaseDetailPage({
                 {serviceCase.summary ?? "No detailed summary has been added yet."}
               </p>
             </div>
-            <ServiceCaseStatusActions
-              id={serviceCase.id}
-              currentStatus={serviceCase.status}
-            />
+            {canManageService ? (
+              <ServiceCaseStatusActions
+                id={serviceCase.id}
+                currentStatus={serviceCase.status}
+              />
+            ) : null}
           </div>
         </article>
 
@@ -337,15 +376,17 @@ export default async function ServiceCaseDetailPage({
             </p>
           </div>
           <div className="mt-5">
-            <ServiceCaseCompletionForm
-              serviceCaseId={serviceCase.id}
-              initialValues={{
-                workPerformed: serviceCase.workPerformed ?? "",
-                resolution: serviceCase.resolution ?? "",
-                followUpRequired: serviceCase.followUpRequired,
-                followUpActions: serviceCase.followUpActions ?? "",
-              }}
-            />
+            {canManageService ? (
+              <ServiceCaseCompletionForm
+                serviceCaseId={serviceCase.id}
+                initialValues={{
+                  workPerformed: serviceCase.workPerformed ?? "",
+                  resolution: serviceCase.resolution ?? "",
+                  followUpRequired: serviceCase.followUpRequired,
+                  followUpActions: serviceCase.followUpActions ?? "",
+                }}
+              />
+            ) : null}
           </div>
         </article>
 
@@ -358,41 +399,63 @@ export default async function ServiceCaseDetailPage({
                 {completedTaskCount}/{serviceCase.tasks.length} complete.
               </p>
             </div>
-            <Link
-              href={`/service/${serviceCase.id}/edit`}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
-            >
-              Edit checklist
-            </Link>
+            {canManageService ? (
+              <Link
+                href={`/service/${serviceCase.id}/edit`}
+                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              >
+                Edit checklist
+              </Link>
+            ) : null}
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                Assigned tasks
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">
+                {assignedTaskCount}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                Scheduled tasks
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">
+                {scheduledTaskCount}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                Execution coverage
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-950">
+                {serviceCase.tasks.length > 0
+                  ? `${Math.round((assignedTaskCount / serviceCase.tasks.length) * 100)}% with owners`
+                  : "No tasks yet"}
+              </p>
+            </div>
           </div>
           <div className="mt-5 space-y-3">
             {serviceCase.tasks.length === 0 ? (
               <p className="text-sm text-slate-600">No tasks defined for this case yet.</p>
             ) : (
               serviceCase.tasks.map((task) => (
-                <div
+                <ServiceTaskExecutionCard
                   key={task.id}
-                  className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 md:grid-cols-[auto_minmax(0,1fr)_auto]"
-                >
-                  <ServiceTaskToggle taskId={task.id} checked={task.isCompleted} />
-                  <div>
-                    <p
-                      className={`text-sm font-medium ${
-                        task.isCompleted ? "text-slate-500 line-through" : "text-slate-900"
-                      }`}
-                    >
-                      {task.title}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {task.isCompleted && task.completedAt
-                        ? `Completed ${task.completedAt.toLocaleString()}`
-                        : "Pending"}
-                    </p>
-                  </div>
-                  <div className="text-xs font-medium text-slate-500">
-                    Step {task.sortOrder + 1}
-                  </div>
-                </div>
+                  canManage={canManageService}
+                  assignees={assignees}
+                  task={{
+                    id: task.id,
+                    title: task.title,
+                    notes: task.notes ?? "",
+                    isCompleted: task.isCompleted,
+                    dueAt: task.dueAt?.toISOString() ?? "",
+                    assignedUserId: task.assignedUserId ?? "",
+                    assignedUserName: task.assignedUser?.fullName ?? null,
+                    completedAtLabel: task.completedAt?.toLocaleString() ?? null,
+                  }}
+                />
               ))
             )}
           </div>
@@ -413,7 +476,7 @@ export default async function ServiceCaseDetailPage({
             </span>
           </div>
           <div className="mt-5 space-y-4">
-            <ServiceNoteForm serviceCaseId={serviceCase.id} />
+            {canManageService ? <ServiceNoteForm serviceCaseId={serviceCase.id} /> : null}
             {serviceCase.notes.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
                 No service notes yet.
@@ -423,6 +486,7 @@ export default async function ServiceCaseDetailPage({
                 <ServiceNoteItem
                   key={note.id}
                   serviceCaseId={serviceCase.id}
+                  canManage={canManageService}
                   note={{
                     id: note.id,
                     body: note.body,
@@ -522,18 +586,22 @@ export default async function ServiceCaseDetailPage({
                         : "Unknown uploader"}
                     </p>
                   </div>
-                  <DeleteServiceAttachmentButton
-                    serviceCaseId={serviceCase.id}
-                    attachmentId={attachment.id}
-                  />
+                  {canManageService ? (
+                    <DeleteServiceAttachmentButton
+                      serviceCaseId={serviceCase.id}
+                      attachmentId={attachment.id}
+                    />
+                  ) : null}
                 </div>
               ))
             )}
           </div>
 
-          <div className="mt-6 rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5">
-            <ServiceAttachmentUploadForm serviceCaseId={serviceCase.id} />
-          </div>
+          {canManageService ? (
+            <div className="mt-6 rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5">
+              <ServiceAttachmentUploadForm serviceCaseId={serviceCase.id} />
+            </div>
+          ) : null}
         </article>
       </section>
     </div>

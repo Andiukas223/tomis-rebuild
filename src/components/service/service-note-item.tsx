@@ -6,6 +6,7 @@ import { ServiceNoteForm } from "@/components/service/service-note-form";
 
 type ServiceNoteItemProps = {
   serviceCaseId: string;
+  canManage: boolean;
   note: {
     id: string;
     body: string;
@@ -16,7 +17,11 @@ type ServiceNoteItemProps = {
   };
 };
 
-export function ServiceNoteItem({ serviceCaseId, note }: ServiceNoteItemProps) {
+export function ServiceNoteItem({
+  serviceCaseId,
+  canManage,
+  note,
+}: ServiceNoteItemProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
@@ -47,50 +52,52 @@ export function ServiceNoteItem({ serviceCaseId, note }: ServiceNoteItemProps) {
               {note.createdAtLabel}
               {note.isEdited ? ` · Edited ${note.updatedAtLabel}` : ""}
             </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setIsEditing(true)}
-                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => {
-                  const confirmed = window.confirm(
-                    "Delete this note from the service history?",
-                  );
-
-                  if (!confirmed) {
-                    return;
-                  }
-
-                  setError("");
-                  startTransition(async () => {
-                    const response = await fetch(
-                      `/api/service-cases/${serviceCaseId}/notes/${note.id}`,
-                      {
-                        method: "DELETE",
-                        credentials: "include",
-                      },
+            {canManage ? (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => {
+                    const confirmed = window.confirm(
+                      "Delete this note from the service history?",
                     );
 
-                    if (!response.ok) {
-                      const data = (await response.json()) as { message?: string };
-                      setError(data.message ?? "Failed to delete note.");
+                    if (!confirmed) {
                       return;
                     }
 
-                    router.refresh();
-                  });
-                }}
-                className="rounded-full border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isPending ? "Deleting..." : "Delete"}
-              </button>
-            </div>
+                    setError("");
+                    startTransition(async () => {
+                      const response = await fetch(
+                        `/api/service-cases/${serviceCaseId}/notes/${note.id}`,
+                        {
+                          method: "DELETE",
+                          credentials: "include",
+                        },
+                      );
+
+                      if (!response.ok) {
+                        const data = (await response.json()) as { message?: string };
+                        setError(data.message ?? "Failed to delete note.");
+                        return;
+                      }
+
+                      router.refresh();
+                    });
+                  }}
+                  className="rounded-full border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isPending ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            ) : null}
           </div>
         </>
       )}

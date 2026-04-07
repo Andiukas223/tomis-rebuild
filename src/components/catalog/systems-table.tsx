@@ -17,9 +17,10 @@ type SystemsTableProps = {
     q: string;
     status: string;
   };
+  canManage: boolean;
 };
 
-export function SystemsTable({ systems, filters }: SystemsTableProps) {
+export function SystemsTable({ systems, filters, canManage }: SystemsTableProps) {
   return (
     <section className="rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
@@ -31,14 +32,16 @@ export function SystemsTable({ systems, filters }: SystemsTableProps) {
             modules.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/catalog/systems/new"
-            className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-          >
-            Create system
-          </Link>
-        </div>
+        {canManage ? (
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/catalog/systems/new"
+              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+            >
+              Create system
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       <form
@@ -135,13 +138,17 @@ export function SystemsTable({ systems, filters }: SystemsTableProps) {
                       >
                         View
                       </Link>
-                      <Link
-                        href={`/catalog/systems/${system.id}/edit`}
-                        className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                      >
-                        Edit
-                      </Link>
-                      <DeleteSystemButton id={system.id} />
+                      {canManage ? (
+                        <>
+                          <Link
+                            href={`/catalog/systems/${system.id}/edit`}
+                            className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          >
+                            Edit
+                          </Link>
+                          <DeleteSystemButton id={system.id} />
+                        </>
+                      ) : null}
                     </div>
                   </td>
                 </tr>

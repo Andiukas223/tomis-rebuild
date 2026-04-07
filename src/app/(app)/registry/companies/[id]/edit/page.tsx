@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
+import { RestrictedAccess } from "@/components/app/restricted-access";
 import { CompanyForm } from "@/components/registry/company-form";
 
 type EditCompanyPageProps = {
@@ -19,6 +21,16 @@ export default async function EditCompanyPage({
 
   if (!user) {
     notFound();
+  }
+
+  if (!hasCapability(user, "registry.manage")) {
+    return (
+      <RestrictedAccess
+        eyebrow="Registry / Companies"
+        title="Edit company"
+        description="Only registry managers can update company records."
+      />
+    );
   }
 
   const { id } = await params;

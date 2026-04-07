@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
+import { RestrictedAccess } from "@/components/app/restricted-access";
 import { HospitalForm } from "@/components/registry/hospital-form";
 
 type EditHospitalPageProps = {
@@ -19,6 +21,16 @@ export default async function EditHospitalPage({
 
   if (!user) {
     notFound();
+  }
+
+  if (!hasCapability(user, "registry.manage")) {
+    return (
+      <RestrictedAccess
+        eyebrow="Registry / Hospitals"
+        title="Edit hospital"
+        description="Only registry managers can update hospital records."
+      />
+    );
   }
 
   const { id } = await params;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
 
@@ -37,6 +38,9 @@ export default async function ProductDetailPage({
     notFound();
   }
 
+  const canManageCatalog = hasCapability(user, "catalog.manage");
+  const canViewRegistry = hasCapability(user, "registry.view");
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -51,12 +55,14 @@ export default async function ProductDetailPage({
             >
               Back to products
             </Link>
-            <Link
-              href={`/catalog/products/${product.id}/edit`}
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-            >
-              Edit product
-            </Link>
+            {canManageCatalog ? (
+              <Link
+                href={`/catalog/products/${product.id}/edit`}
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+              >
+                Edit product
+              </Link>
+            ) : null}
           </>
         }
       />
@@ -99,12 +105,16 @@ export default async function ProductDetailPage({
             Manufacturer
           </p>
           <p className="mt-3 text-2xl font-semibold text-slate-950">
-            <Link
-              href={`/registry/manufacturers/${product.manufacturer.id}`}
-              className="hover:text-sky-700"
-            >
-              {product.manufacturer.name}
-            </Link>
+            {canViewRegistry ? (
+              <Link
+                href={`/registry/manufacturers/${product.manufacturer.id}`}
+                className="hover:text-sky-700"
+              >
+                {product.manufacturer.name}
+              </Link>
+            ) : (
+              product.manufacturer.name
+            )}
           </p>
         </article>
         <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
+import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
 import { ServiceCasesTable } from "@/components/service/service-cases-table";
 
@@ -23,6 +24,7 @@ const allowedPriorities = ["Low", "Medium", "High", "Critical"] as const;
 
 export default async function ServicePage({ searchParams }: ServicePageProps) {
   const user = await getServerSessionUser();
+  const canManage = hasCapability(user, "service.manage");
   const {
     q = "",
     status = "all",
@@ -437,12 +439,14 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
             >
               Export CSV
             </a>
-            <Link
-              href={createHref}
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-            >
-              New service case
-            </Link>
+            {canManage ? (
+              <Link
+                href={createHref}
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+              >
+                New service case
+              </Link>
+            ) : null}
           </>
         }
       />
@@ -659,6 +663,7 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
         }}
         assignees={assignees}
         createHref={createHref}
+        canManage={canManage}
       />
     </div>
   );

@@ -1,5 +1,8 @@
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import type { AppCapability } from "@/lib/permissions";
+import { hasCapability } from "@/lib/permissions";
 import { SESSION_COOKIE_NAME } from "@/lib/session-constants";
 import { decodeSessionToken, toSessionUser } from "@/lib/session";
 
@@ -49,4 +52,27 @@ export async function getServerSessionUser() {
     organizationId: session.user.organizationId,
     organizationName: session.user.organization.name,
   });
+}
+
+export async function requireServerCapability(capability: AppCapability) {
+  const user = await getServerSessionUser();
+
+  if (!user) {
+    return {
+      user: null,
+      response: NextResponse.json({ message: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  if (!hasCapability(user, capability)) {
+    return {
+      user: null,
+      response: NextResponse.json({ message: "Forbidden" }, { status: 403 }),
+    };
+  }
+
+  return {
+    user,
+    response: null,
+  };
 }

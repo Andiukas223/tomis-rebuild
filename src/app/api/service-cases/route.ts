@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getServerSessionUser } from "@/lib/server-session";
+import {
+  getServerSessionUser,
+  requireServerCapability,
+} from "@/lib/server-session";
 import {
   normalizeServiceCaseInput,
   validateServiceCaseInput,
@@ -23,8 +26,11 @@ type CreateServiceCaseBody = {
   assignedUserId?: string | null;
   tasks?: {
     title?: string;
+    notes?: string | null;
     isCompleted?: boolean;
     sortOrder?: number;
+    dueAt?: string | null;
+    assignedUserId?: string | null;
   }[];
 };
 
@@ -90,10 +96,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("service.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const body = (await request.json()) as CreateServiceCaseBody;
@@ -152,6 +158,32 @@ export async function POST(request: Request) {
     }
   }
 
+  if (input.tasks.some((task) => task.assignedUserId)) {
+    const taskAssigneeIds = [
+      ...new Set(
+        input.tasks
+          .map((task) => task.assignedUserId)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    ];
+    const validTaskAssigneeCount = await db.user.count({
+      where: {
+        id: {
+          in: taskAssigneeIds,
+        },
+        organizationId: user.organizationId,
+        isActive: true,
+      },
+    });
+
+    if (validTaskAssigneeCount !== taskAssigneeIds.length) {
+      return NextResponse.json(
+        { message: "One or more task assignees were not found." },
+        { status: 400 },
+      );
+    }
+  }
+
   const existing = await db.serviceCase.findUnique({
     where: {
       code: input.code,
@@ -185,9 +217,12 @@ export async function POST(request: Request) {
       tasks: {
         create: input.tasks.map((task) => ({
           title: task.title,
+          notes: task.notes,
           isCompleted: task.isCompleted,
           completedAt: task.isCompleted ? new Date() : null,
           sortOrder: task.sortOrder,
+          dueAt: task.dueAt ? new Date(task.dueAt) : null,
+          assignedUserId: task.assignedUserId,
         })),
       },
     },
@@ -197,6 +232,9 @@ export async function POST(request: Request) {
       assignedUser: true,
       tasks: {
         orderBy: [{ sortOrder: "asc" }],
+        include: {
+          assignedUser: true,
+        },
       },
     },
   });

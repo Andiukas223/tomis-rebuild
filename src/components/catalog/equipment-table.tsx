@@ -20,9 +20,14 @@ type EquipmentTableProps = {
     status: string;
     system: string;
   };
+  canManage: boolean;
 };
 
-export function EquipmentTable({ equipment, filters }: EquipmentTableProps) {
+export function EquipmentTable({
+  equipment,
+  filters,
+  canManage,
+}: EquipmentTableProps) {
   return (
     <section className="rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
@@ -33,14 +38,16 @@ export function EquipmentTable({ equipment, filters }: EquipmentTableProps) {
             and warehouse workflows.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/catalog/equipment/new"
-            className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-          >
-            Create equipment
-          </Link>
-        </div>
+        {canManage ? (
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/catalog/equipment/new"
+              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+            >
+              Create equipment
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       <form
@@ -153,13 +160,17 @@ export function EquipmentTable({ equipment, filters }: EquipmentTableProps) {
                       >
                         View
                       </Link>
-                      <Link
-                        href={`/catalog/equipment/${item.id}/edit`}
-                        className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                      >
-                        Edit
-                      </Link>
-                      <DeleteEquipmentButton id={item.id} />
+                      {canManage ? (
+                        <>
+                          <Link
+                            href={`/catalog/equipment/${item.id}/edit`}
+                            className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          >
+                            Edit
+                          </Link>
+                          <DeleteEquipmentButton id={item.id} />
+                        </>
+                      ) : null}
                     </div>
                   </td>
                 </tr>

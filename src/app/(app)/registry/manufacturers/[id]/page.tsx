@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
 import { DeleteManufacturerButton } from "@/components/registry/delete-manufacturer-button";
@@ -63,6 +64,8 @@ export default async function ManufacturerDetailPage({
     notFound();
   }
 
+  const canManageRegistry = hasCapability(user, "registry.manage");
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -77,20 +80,24 @@ export default async function ManufacturerDetailPage({
             >
               Back to manufacturers
             </Link>
-            <Link
-              href={`/registry/manufacturers/${manufacturer.id}/edit`}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
-            >
-              Edit manufacturer
-            </Link>
-            {manufacturer._count.products === 0 &&
-            manufacturer._count.equipment === 0 ? (
-              <DeleteManufacturerButton id={manufacturer.id} />
-            ) : (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700">
-                Remove linked records before deleting
-              </span>
-            )}
+            {canManageRegistry ? (
+              <Link
+                href={`/registry/manufacturers/${manufacturer.id}/edit`}
+                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              >
+                Edit manufacturer
+              </Link>
+            ) : null}
+            {canManageRegistry ? (
+              manufacturer._count.products === 0 &&
+              manufacturer._count.equipment === 0 ? (
+                <DeleteManufacturerButton id={manufacturer.id} />
+              ) : (
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700">
+                  Remove linked records before deleting
+                </span>
+              )
+            ) : null}
           </>
         }
       />

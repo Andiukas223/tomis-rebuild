@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
+import { RestrictedAccess } from "@/components/app/restricted-access";
 import {
   EquipmentForm,
   type EquipmentFormValues,
@@ -22,6 +24,16 @@ export default async function EditEquipmentPage({
 
   if (!user) {
     notFound();
+  }
+
+  if (!hasCapability(user, "catalog.manage")) {
+    return (
+      <RestrictedAccess
+        eyebrow="Catalog / Equipment"
+        title="Edit equipment"
+        description="Only catalog managers can update equipment records."
+      />
+    );
   }
 
   const { id } = await params;

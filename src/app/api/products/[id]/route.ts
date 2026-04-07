@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getServerSessionUser } from "@/lib/server-session";
+import {
+  getServerSessionUser,
+  requireServerCapability,
+} from "@/lib/server-session";
 import { normalizeProductInput, validateProductInput } from "@/lib/product-input";
 
 type ProductRouteProps = {
@@ -45,10 +48,10 @@ export async function GET(_: Request, { params }: ProductRouteProps) {
 }
 
 export async function PATCH(request: Request, { params }: ProductRouteProps) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("catalog.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const { id } = await params;
@@ -114,10 +117,10 @@ export async function PATCH(request: Request, { params }: ProductRouteProps) {
 }
 
 export async function DELETE(_: Request, { params }: ProductRouteProps) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("catalog.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const { id } = await params;

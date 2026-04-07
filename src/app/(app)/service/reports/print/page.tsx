@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getServerSessionUser } from "@/lib/server-session";
+import { hasCapability } from "@/lib/permissions";
 import { PrintReportButton } from "@/components/service/print-report-button";
 import { SaveServiceReportButton } from "@/components/service/save-service-report-button";
 import {
@@ -24,6 +25,34 @@ export default async function ServicePrintPage({
   searchParams,
 }: ServicePrintPageProps) {
   const user = await getServerSessionUser();
+  const canViewReports = hasCapability(user, "service.reports");
+
+  if (!canViewReports) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-6 px-6 py-8">
+        <div className="rounded-[1.75rem] border border-slate-200 bg-white p-8 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Service
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold text-slate-950">
+            Printable reports are not available for your role
+          </h1>
+          <p className="mt-3 text-sm text-slate-600">
+            This printable operational summary is limited to the report-capable roles in the rebuild.
+          </p>
+          <div className="mt-6">
+            <Link
+              href="/service"
+              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+            >
+              Back to service
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const filters = normalizeServiceReportFilters(await searchParams);
   const report = await getServiceReportData(user, filters);
   const reportQuery = buildServiceReportQuery(filters);

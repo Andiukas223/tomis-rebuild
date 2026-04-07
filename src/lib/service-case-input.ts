@@ -15,8 +15,11 @@ export type ServiceCaseInput = {
   assignedUserId: string | null;
   tasks: {
     title: string;
+    notes: string | null;
     isCompleted: boolean;
     sortOrder: number;
+    dueAt: string | null;
+    assignedUserId: string | null;
   }[];
 };
 
@@ -37,8 +40,11 @@ export function normalizeServiceCaseInput(input: {
   assignedUserId?: string | null;
   tasks?: {
     title?: string;
+    notes?: string | null;
     isCompleted?: boolean;
     sortOrder?: number;
+    dueAt?: string | null;
+    assignedUserId?: string | null;
   }[];
 }): ServiceCaseInput {
   return {
@@ -60,10 +66,13 @@ export function normalizeServiceCaseInput(input: {
       input.tasks
         ?.map((task, index) => ({
           title: task.title?.trim() ?? "",
+          notes: task.notes?.trim() || null,
           isCompleted: Boolean(task.isCompleted),
           sortOrder: Number.isFinite(task.sortOrder)
             ? Number(task.sortOrder)
             : index,
+          dueAt: task.dueAt?.trim() || null,
+          assignedUserId: task.assignedUserId?.trim() || null,
         }))
         .filter((task) => task.title.length > 0) ?? [],
   };
@@ -99,6 +108,10 @@ export function validateServiceCaseInput(input: ServiceCaseInput) {
 
   if (input.completedAt && Number.isNaN(Date.parse(input.completedAt))) {
     return "Completed date is invalid.";
+  }
+
+  if (input.tasks.some((task) => task.dueAt && Number.isNaN(Date.parse(task.dueAt)))) {
+    return "One or more task due dates are invalid.";
   }
 
   if (input.followUpRequired && !input.followUpActions) {

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
+import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
 
 export const dynamic = "force-dynamic";
 
 export default async function CompaniesPage() {
   const user = await getServerSessionUser();
+  const canManage = hasCapability(user, "registry.manage");
 
   const companies = user
     ? await db.company.findMany({
@@ -24,12 +26,14 @@ export default async function CompaniesPage() {
         title="Companies"
         description="Companies are the next real Registry slice. This module establishes the reusable pattern for customer and partner master data."
         actions={
-          <Link
-            href="/registry/companies/new"
-            className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-          >
-            New company
-          </Link>
+          canManage ? (
+            <Link
+              href="/registry/companies/new"
+              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+            >
+              New company
+            </Link>
+          ) : null
         }
       />
 
@@ -77,12 +81,14 @@ export default async function CompaniesPage() {
                       >
                         View
                       </Link>
-                      <Link
-                        href={`/registry/companies/${company.id}/edit`}
-                        className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                      >
-                        Edit
-                      </Link>
+                      {canManage ? (
+                        <Link
+                          href={`/registry/companies/${company.id}/edit`}
+                          className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                          Edit
+                        </Link>
+                      ) : null}
                     </div>
                   </td>
                 </tr>

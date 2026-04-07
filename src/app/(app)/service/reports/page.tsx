@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getServerSessionUser } from "@/lib/server-session";
+import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
 import { SaveServiceReportButton } from "@/components/service/save-service-report-button";
 import {
@@ -24,6 +25,28 @@ export default async function ServiceReportsPage({
   searchParams,
 }: ServiceReportsPageProps) {
   const user = await getServerSessionUser();
+  const canViewReports = hasCapability(user, "service.reports");
+
+  if (!canViewReports) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Service"
+          title="Reports are not available for your role"
+          description="Service reporting is currently limited to coordinator and administrator roles in the rebuild."
+          actions={
+            <Link
+              href="/service"
+              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+            >
+              Back to service
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
   const filters = normalizeServiceReportFilters(await searchParams);
   const {
     serviceUsers,

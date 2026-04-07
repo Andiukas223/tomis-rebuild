@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
+import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
 import { EquipmentTable } from "@/components/catalog/equipment-table";
 
@@ -20,6 +21,7 @@ export default async function EquipmentPage({
   searchParams,
 }: EquipmentPageProps) {
   const user = await getServerSessionUser();
+  const canManage = hasCapability(user, "catalog.manage");
   const { q = "", status = "all", system = "all" } = await searchParams;
   const normalizedQuery = q.trim();
   const normalizedStatus = allowedStatuses.includes(
@@ -155,12 +157,14 @@ export default async function EquipmentPage({
             >
               Export CSV
             </a>
-            <Link
-              href="/catalog/equipment/new"
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-            >
-              New equipment
-            </Link>
+            {canManage ? (
+              <Link
+                href="/catalog/equipment/new"
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+              >
+                New equipment
+              </Link>
+            ) : null}
           </>
         }
       />
@@ -217,6 +221,7 @@ export default async function EquipmentPage({
           status: normalizedStatus,
           system: normalizedSystem,
         }}
+        canManage={canManage}
       />
     </div>
   );

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getServerSessionUser } from "@/lib/server-session";
+import {
+  getServerSessionUser,
+  requireServerCapability,
+} from "@/lib/server-session";
 import {
   normalizeCompanyInput,
   validateCompanyInput,
@@ -43,10 +46,10 @@ export async function GET(_: Request, { params }: CompanyRouteProps) {
 }
 
 export async function PATCH(request: Request, { params }: CompanyRouteProps) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("registry.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const { id } = await params;
@@ -96,10 +99,10 @@ export async function PATCH(request: Request, { params }: CompanyRouteProps) {
 }
 
 export async function DELETE(_: Request, { params }: CompanyRouteProps) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("registry.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const { id } = await params;

@@ -34,6 +34,7 @@ type ServiceCasesTableProps = {
     fullName: string;
   }[];
   createHref?: string;
+  canManage: boolean;
 };
 
 export function ServiceCasesTable({
@@ -41,6 +42,7 @@ export function ServiceCasesTable({
   filters,
   assignees,
   createHref = "/service/new",
+  canManage,
 }: ServiceCasesTableProps) {
   return (
     <section className="rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
@@ -52,14 +54,16 @@ export function ServiceCasesTable({
             a specific piece of equipment.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={createHref}
-            className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-          >
-            Create service case
-          </Link>
-        </div>
+        {canManage ? (
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={createHref}
+              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+            >
+              Create service case
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       <form
@@ -238,13 +242,17 @@ export function ServiceCasesTable({
                       >
                         View
                       </Link>
-                      <Link
-                        href={`/service/${item.id}/edit`}
-                        className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                      >
-                        Edit
-                      </Link>
-                      <DeleteServiceCaseButton id={item.id} />
+                      {canManage ? (
+                        <>
+                          <Link
+                            href={`/service/${item.id}/edit`}
+                            className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          >
+                            Edit
+                          </Link>
+                          <DeleteServiceCaseButton id={item.id} />
+                        </>
+                      ) : null}
                     </div>
                   </td>
                 </tr>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getServerSessionUser } from "@/lib/server-session";
+import { getServerSessionUser, requireServerCapability } from "@/lib/server-session";
 import {
   normalizeServiceCaseInput,
   validateServiceCaseInput,
@@ -29,8 +29,11 @@ type UpdateServiceCaseBody = {
   assignedUserId?: string | null;
   tasks?: {
     title?: string;
+    notes?: string | null;
     isCompleted?: boolean;
     sortOrder?: number;
+    dueAt?: string | null;
+    assignedUserId?: string | null;
   }[];
 };
 
@@ -74,6 +77,9 @@ export async function GET(_: Request, { params }: ServiceCaseRouteProps) {
       },
       tasks: {
         orderBy: [{ sortOrder: "asc" }],
+        include: {
+          assignedUser: true,
+        },
       },
     },
   });
@@ -86,10 +92,10 @@ export async function GET(_: Request, { params }: ServiceCaseRouteProps) {
 }
 
 export async function PATCH(request: Request, { params }: ServiceCaseRouteProps) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("service.manage");
 
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return response!;
   }
 
   const { id } = await params;
@@ -161,6 +167,32 @@ export async function PATCH(request: Request, { params }: ServiceCaseRouteProps)
     }
   }
 
+  if (input.tasks.some((task) => task.assignedUserId)) {
+    const taskAssigneeIds = [
+      ...new Set(
+        input.tasks
+          .map((task) => task.assignedUserId)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    ];
+    const validTaskAssigneeCount = await db.user.count({
+      where: {
+        id: {
+          in: taskAssigneeIds,
+        },
+        organizationId: user.organizationId,
+        isActive: true,
+      },
+    });
+
+    if (validTaskAssigneeCount !== taskAssigneeIds.length) {
+      return NextResponse.json(
+        { message: "One or more task assignees were not found." },
+        { status: 400 },
+      );
+    }
+  }
+
   const duplicate = await db.serviceCase.findFirst({
     where: {
       code: input.code,
@@ -198,9 +230,12 @@ export async function PATCH(request: Request, { params }: ServiceCaseRouteProps)
         deleteMany: {},
         create: input.tasks.map((task) => ({
           title: task.title,
+          notes: task.notes,
           isCompleted: task.isCompleted,
           completedAt: task.isCompleted ? new Date() : null,
           sortOrder: task.sortOrder,
+          dueAt: task.dueAt ? new Date(task.dueAt) : null,
+          assignedUserId: task.assignedUserId,
         })),
       },
     },
@@ -222,6 +257,9 @@ export async function PATCH(request: Request, { params }: ServiceCaseRouteProps)
       },
       tasks: {
         orderBy: [{ sortOrder: "asc" }],
+        include: {
+          assignedUser: true,
+        },
       },
     },
   });
@@ -230,10 +268,10 @@ export async function PATCH(request: Request, { params }: ServiceCaseRouteProps)
 }
 
 export async function DELETE(_: Request, { params }: ServiceCaseRouteProps) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("service.manage");
 
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return response!;
   }
 
   const { id } = await params;

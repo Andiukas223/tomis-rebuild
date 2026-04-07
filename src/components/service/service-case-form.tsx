@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 
 export type ServiceCaseTaskFormValue = {
   title: string;
+  notes: string;
   isCompleted: boolean;
+  dueAt: string;
+  assignedUserId: string;
 };
 
 export type ServiceCaseFormValues = {
@@ -70,9 +73,27 @@ const defaultValues: ServiceCaseFormValues = {
   equipmentId: "",
   assignedUserId: "",
   tasks: [
-    { title: "Review issue and confirm scope", isCompleted: false },
-    { title: "Perform technical work", isCompleted: false },
-    { title: "Update service notes and close case", isCompleted: false },
+    {
+      title: "Review issue and confirm scope",
+      notes: "",
+      isCompleted: false,
+      dueAt: "",
+      assignedUserId: "",
+    },
+    {
+      title: "Perform technical work",
+      notes: "",
+      isCompleted: false,
+      dueAt: "",
+      assignedUserId: "",
+    },
+    {
+      title: "Update service notes and close case",
+      notes: "",
+      isCompleted: false,
+      dueAt: "",
+      assignedUserId: "",
+    },
   ],
 };
 
@@ -118,11 +139,11 @@ export function ServiceCaseForm({
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              ...values,
-              tasks: values.tasks.map((task, index) => ({
-                ...task,
-                sortOrder: index,
+              body: JSON.stringify({
+                ...values,
+                tasks: values.tasks.map((task, index) => ({
+                  ...task,
+                  sortOrder: index,
               })),
             }),
           });
@@ -405,7 +426,16 @@ export function ServiceCaseForm({
             onClick={() =>
               setValues((current) => ({
                 ...current,
-                tasks: [...current.tasks, { title: "", isCompleted: false }],
+                tasks: [
+                  ...current.tasks,
+                  {
+                    title: "",
+                    notes: "",
+                    isCompleted: false,
+                    dueAt: "",
+                    assignedUserId: current.assignedUserId,
+                  },
+                ],
               }))
             }
             className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
@@ -417,53 +447,107 @@ export function ServiceCaseForm({
           {values.tasks.map((task, index) => (
             <div
               key={`${index}-${task.title}`}
-              className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[auto_minmax(0,1fr)_auto]"
+              className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4"
             >
-              <label className="flex items-center gap-2 text-sm text-slate-600">
+              <div className="grid gap-3 md:grid-cols-[auto_minmax(0,1.4fr)_220px_220px_auto] md:items-start">
+                <label className="flex items-center gap-2 pt-3 text-sm text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={task.isCompleted}
+                    onChange={(event) =>
+                      setValues((current) => ({
+                        ...current,
+                        tasks: current.tasks.map((item, taskIndex) =>
+                          taskIndex === index
+                            ? { ...item, isCompleted: event.target.checked }
+                            : item,
+                        ),
+                      }))
+                    }
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  Done
+                </label>
                 <input
-                  type="checkbox"
-                  checked={task.isCompleted}
+                  value={task.title}
                   onChange={(event) =>
                     setValues((current) => ({
                       ...current,
                       tasks: current.tasks.map((item, taskIndex) =>
                         taskIndex === index
-                          ? { ...item, isCompleted: event.target.checked }
+                          ? { ...item, title: event.target.value }
                           : item,
                       ),
                     }))
                   }
-                  className="h-4 w-4 rounded border-slate-300"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
+                  placeholder={`Task ${index + 1}`}
                 />
-                Done
-              </label>
-              <input
-                value={task.title}
+                <select
+                  value={task.assignedUserId}
+                  onChange={(event) =>
+                    setValues((current) => ({
+                      ...current,
+                      tasks: current.tasks.map((item, taskIndex) =>
+                        taskIndex === index
+                          ? { ...item, assignedUserId: event.target.value }
+                          : item,
+                      ),
+                    }))
+                  }
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
+                >
+                  <option value="">Unassigned</option>
+                  {assignees.map((assignee) => (
+                    <option key={assignee.id} value={assignee.id}>
+                      {assignee.fullName}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="datetime-local"
+                  value={task.dueAt}
+                  onChange={(event) =>
+                    setValues((current) => ({
+                      ...current,
+                      tasks: current.tasks.map((item, taskIndex) =>
+                        taskIndex === index
+                          ? { ...item, dueAt: event.target.value }
+                          : item,
+                      ),
+                    }))
+                  }
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setValues((current) => ({
+                      ...current,
+                      tasks: current.tasks.filter((_, taskIndex) => taskIndex !== index),
+                    }))
+                  }
+                  className="rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50"
+                >
+                  Remove
+                </button>
+              </div>
+              <textarea
+                value={task.notes}
                 onChange={(event) =>
                   setValues((current) => ({
                     ...current,
                     tasks: current.tasks.map((item, taskIndex) =>
                       taskIndex === index
-                        ? { ...item, title: event.target.value }
+                        ? { ...item, notes: event.target.value }
                         : item,
                     ),
                   }))
                 }
+                rows={3}
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
-                placeholder={`Task ${index + 1}`}
+                placeholder="Execution notes, parts needed, or technician instructions."
               />
-              <button
-                type="button"
-                onClick={() =>
-                  setValues((current) => ({
-                    ...current,
-                    tasks: current.tasks.filter((_, taskIndex) => taskIndex !== index),
-                  }))
-                }
-                className="rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50"
-              >
-                Remove
-              </button>
             </div>
           ))}
         </div>

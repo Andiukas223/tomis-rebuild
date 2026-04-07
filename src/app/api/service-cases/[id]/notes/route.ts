@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { normalizeServiceNoteBody, validateServiceNoteBody } from "@/lib/service-note-input";
-import { getServerSessionRecord } from "@/lib/server-session";
+import { requireServerCapability } from "@/lib/server-session";
 
 type RouteContext = {
   params: Promise<{
@@ -14,17 +14,17 @@ type CreateServiceNoteBody = {
 };
 
 export async function POST(request: Request, context: RouteContext) {
-  const session = await getServerSessionRecord();
+  const { user, response } = await requireServerCapability("service.manage");
 
-  if (!session) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    return response!;
   }
 
   const { id } = await context.params;
   const serviceCase = await db.serviceCase.findFirst({
     where: {
       id,
-      organizationId: session.user.organizationId,
+      organizationId: user.organizationId,
     },
   });
 
@@ -47,7 +47,7 @@ export async function POST(request: Request, context: RouteContext) {
     data: {
       body: normalizedBody,
       serviceCaseId: serviceCase.id,
-      authorId: session.user.id,
+      authorId: user.id,
     },
     include: {
       author: true,

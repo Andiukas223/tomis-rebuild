@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getServerSessionUser } from "@/lib/server-session";
+import { requireServerCapability } from "@/lib/server-session";
 
 type ServiceCaseCompletionRouteProps = {
   params: Promise<{
@@ -19,10 +19,10 @@ export async function PATCH(
   request: Request,
   { params }: ServiceCaseCompletionRouteProps,
 ) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("service.manage");
 
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return response!;
   }
 
   const { id } = await params;

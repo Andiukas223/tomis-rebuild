@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getServerSessionUser } from "@/lib/server-session";
+import {
+  getServerSessionUser,
+  requireServerCapability,
+} from "@/lib/server-session";
 import {
   normalizeHospitalInput,
   validateHospitalInput,
@@ -49,10 +52,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("registry.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const body = (await request.json()) as CreateHospitalBody;

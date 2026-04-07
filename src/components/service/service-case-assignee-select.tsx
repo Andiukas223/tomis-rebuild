@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth";
+import { hasCapability } from "@/lib/permissions";
 
 type ServiceCaseAssigneeSelectProps = {
   serviceCaseId: string;
@@ -18,9 +20,21 @@ export function ServiceCaseAssigneeSelect({
   assignees,
 }: ServiceCaseAssigneeSelectProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [value, setValue] = useState(assignedUserId ?? "");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  if (!hasCapability(user, "service.dispatch")) {
+    return (
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-slate-600">
+          {assignees.find((assignee) => assignee.id === assignedUserId)?.fullName ??
+            "Unassigned"}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">

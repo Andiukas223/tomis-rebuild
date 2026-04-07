@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { deleteServiceAttachment, readServiceAttachment } from "@/lib/service-attachments";
-import { getServerSessionRecord } from "@/lib/server-session";
+import { getServerSessionRecord, requireServerCapability } from "@/lib/server-session";
 
 type RouteContext = {
   params: Promise<{
@@ -55,10 +55,10 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
-  const session = await getServerSessionRecord();
+  const { user, response } = await requireServerCapability("service.manage");
 
-  if (!session) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    return response!;
   }
 
   const { id, attachmentId } = await context.params;
@@ -67,7 +67,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       id: attachmentId,
       serviceCaseId: id,
       serviceCase: {
-        organizationId: session.user.organizationId,
+        organizationId: user.organizationId,
       },
     },
   });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { deleteServiceAttachment, MAX_SERVICE_ATTACHMENT_BYTES, saveServiceAttachment } from "@/lib/service-attachments";
-import { getServerSessionRecord } from "@/lib/server-session";
+import { requireServerCapability } from "@/lib/server-session";
 
 type RouteContext = {
   params: Promise<{
@@ -10,17 +10,17 @@ type RouteContext = {
 };
 
 export async function POST(request: Request, context: RouteContext) {
-  const session = await getServerSessionRecord();
+  const { user, response } = await requireServerCapability("service.manage");
 
-  if (!session) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    return response!;
   }
 
   const { id } = await context.params;
   const serviceCase = await db.serviceCase.findFirst({
     where: {
       id,
-      organizationId: session.user.organizationId,
+      organizationId: user.organizationId,
     },
   });
 
@@ -65,7 +65,7 @@ export async function POST(request: Request, context: RouteContext) {
         contentType: savedFile.contentType,
         sizeBytes: savedFile.sizeBytes,
         serviceCaseId: serviceCase.id,
-        uploadedById: session.user.id,
+        uploadedById: user.id,
       },
       include: {
         uploadedBy: true,

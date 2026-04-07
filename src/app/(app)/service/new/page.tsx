@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
+import { RestrictedAccess } from "@/components/app/restricted-access";
 import {
   ServiceCaseForm,
   type ServiceCaseFormValues,
@@ -19,6 +21,17 @@ export default async function NewServiceCasePage({
   searchParams,
 }: NewServiceCasePageProps) {
   const user = await getServerSessionUser();
+
+  if (!hasCapability(user, "service.manage")) {
+    return (
+      <RestrictedAccess
+        eyebrow="Service"
+        title="Create service case"
+        description="Only service users with case management access can create service work."
+      />
+    );
+  }
+
   const { systemId = "", equipmentId = "" } = await searchParams;
   const normalizedSystemId = systemId.trim();
   const normalizedEquipmentId = equipmentId.trim();
@@ -91,9 +104,27 @@ export default async function NewServiceCasePage({
     equipmentId: preselectedEquipment?.id ?? "",
     assignedUserId: "",
     tasks: [
-      { title: "Review issue and confirm scope", isCompleted: false },
-      { title: "Perform technical work", isCompleted: false },
-      { title: "Update service notes and close case", isCompleted: false },
+      {
+        title: "Review issue and confirm scope",
+        notes: "",
+        isCompleted: false,
+        dueAt: "",
+        assignedUserId: "",
+      },
+      {
+        title: "Perform technical work",
+        notes: "",
+        isCompleted: false,
+        dueAt: "",
+        assignedUserId: "",
+      },
+      {
+        title: "Update service notes and close case",
+        notes: "",
+        isCompleted: false,
+        dueAt: "",
+        assignedUserId: "",
+      },
     ],
   };
 

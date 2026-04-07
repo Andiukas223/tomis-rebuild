@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getServerSessionUser } from "@/lib/server-session";
+import { requireServerCapability } from "@/lib/server-session";
 import {
   createServiceReportSnapshot,
   getServiceReportData,
@@ -8,10 +8,10 @@ import {
 } from "@/lib/service-reporting";
 
 export async function POST(request: Request) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("documents.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const body = (await request.json().catch(() => ({}))) as {
@@ -19,16 +19,33 @@ export async function POST(request: Request) {
     dateFrom?: string;
     dateTo?: string;
     status?: string;
+    title?: string;
+    notes?: string;
+    label?: string;
+    workflowStatus?: string;
   };
 
   const filters = normalizeServiceReportFilters(body);
   const report = await getServiceReportData(user, filters);
   const snapshot = createServiceReportSnapshot(report);
+  const customTitle = body.title?.trim() ?? "";
+  const customNotes = body.notes?.trim() ?? "";
+  const customLabel = body.label?.trim() ?? "";
+  const normalizedWorkflowStatus =
+    body.workflowStatus === "Shared" || body.workflowStatus === "Archived"
+      ? body.workflowStatus
+      : "Draft";
 
   const record = await db.generatedReport.create({
     data: {
       reportType: "service-operational-summary",
-      title: `Service operational summary - ${report.windowLabel}`,
+      title:
+        customTitle.length > 0
+          ? customTitle
+          : `Service operational summary - ${report.windowLabel}`,
+      notes: customNotes.length > 0 ? customNotes : null,
+      label: customLabel.length > 0 ? customLabel : null,
+      workflowStatus: normalizedWorkflowStatus,
       scopeLabel: report.reportScopeLabel,
       dateWindowLabel: report.windowLabel,
       filters,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { normalizeServiceNoteBody, validateServiceNoteBody } from "@/lib/service-note-input";
-import { getServerSessionRecord } from "@/lib/server-session";
+import { requireServerCapability } from "@/lib/server-session";
 
 type RouteContext = {
   params: Promise<{
@@ -15,10 +15,10 @@ type UpdateServiceNoteBody = {
 };
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const session = await getServerSessionRecord();
+  const { user, response } = await requireServerCapability("service.manage");
 
-  if (!session) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    return response!;
   }
 
   const { id, noteId } = await context.params;
@@ -27,7 +27,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       id: noteId,
       serviceCaseId: id,
       serviceCase: {
-        organizationId: session.user.organizationId,
+        organizationId: user.organizationId,
       },
     },
   });
@@ -60,10 +60,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
-  const session = await getServerSessionRecord();
+  const { user, response } = await requireServerCapability("service.manage");
 
-  if (!session) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    return response!;
   }
 
   const { id, noteId } = await context.params;
@@ -72,7 +72,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       id: noteId,
       serviceCaseId: id,
       serviceCase: {
-        organizationId: session.user.organizationId,
+        organizationId: user.organizationId,
       },
     },
   });

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
+import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
 import { ProductsTable } from "@/components/catalog/products-table";
 
@@ -17,6 +18,7 @@ const allowedStatuses = ["Active", "Maintenance", "Inactive"] as const;
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const user = await getServerSessionUser();
+  const canManage = hasCapability(user, "catalog.manage");
   const { q = "", status = "all" } = await searchParams;
   const normalizedQuery = q.trim();
   const normalizedStatus = allowedStatuses.includes(
@@ -113,12 +115,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             >
               Export CSV
             </a>
-            <Link
-              href="/catalog/products/new"
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-            >
-              New product
-            </Link>
+            {canManage ? (
+              <Link
+                href="/catalog/products/new"
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+              >
+                New product
+              </Link>
+            ) : null}
           </>
         }
       />
@@ -172,6 +176,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           q: normalizedQuery,
           status: normalizedStatus,
         }}
+        canManage={canManage}
       />
     </div>
   );

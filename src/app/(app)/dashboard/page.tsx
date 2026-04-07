@@ -5,11 +5,15 @@ import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
 import { AssignSuggestedTechnicianButton } from "@/components/service/assign-suggested-technician-button";
 import { navigationGroups } from "@/lib/navigation";
+import { getNavigationGroupsForRole, hasCapability } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const user = await getServerSessionUser();
+  const visibleGroups = getNavigationGroupsForRole(user, navigationGroups);
+  const canManageService = hasCapability(user, "service.manage");
+  const canDispatchService = hasCapability(user, "service.dispatch");
 
   const [
     systemsCount,
@@ -203,12 +207,14 @@ export default async function DashboardPage() {
             >
               Open service
             </Link>
-            <Link
-              href="/service/new"
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-            >
-              New service case
-            </Link>
+            {canManageService ? (
+              <Link
+                href="/service/new"
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+              >
+                New service case
+              </Link>
+            ) : null}
           </>
         }
       />
@@ -442,7 +448,7 @@ export default async function DashboardPage() {
                             ? ` - ${dispatchPriorityCase.scheduledAt.toLocaleString()}`
                             : " - unscheduled"}
                         </p>
-                        {nextDispatchCandidate ? (
+                        {nextDispatchCandidate && canDispatchService ? (
                           <div className="mt-3">
                             <AssignSuggestedTechnicianButton
                               serviceCaseId={dispatchPriorityCase.id}
@@ -557,7 +563,7 @@ export default async function DashboardPage() {
             </div>
           </article>
 
-          {navigationGroups.map((group) => (
+          {visibleGroups.map((group) => (
             <article
               key={group.label}
               className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]"

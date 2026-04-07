@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
+import { RestrictedAccess } from "@/components/app/restricted-access";
 import { SystemForm } from "@/components/catalog/system-form";
 
 type EditSystemPageProps = {
@@ -19,6 +21,16 @@ export default async function EditSystemPage({
 
   if (!user) {
     notFound();
+  }
+
+  if (!hasCapability(user, "catalog.manage")) {
+    return (
+      <RestrictedAccess
+        eyebrow="Catalog / Systems"
+        title="Edit system"
+        description="Only catalog managers can update system records."
+      />
+    );
   }
 
   const { id } = await params;

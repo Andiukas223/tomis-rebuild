@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getServerSessionUser } from "@/lib/server-session";
+import { requireServerCapability } from "@/lib/server-session";
 
 type ServiceCaseAssignmentRouteProps = {
   params: Promise<{
@@ -16,10 +16,10 @@ export async function PATCH(
   request: Request,
   { params }: ServiceCaseAssignmentRouteProps,
 ) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("service.dispatch");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const { id } = await params;

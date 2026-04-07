@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getServerSessionUser } from "@/lib/server-session";
+import {
+  getServerSessionUser,
+  requireServerCapability,
+} from "@/lib/server-session";
 import {
   normalizeHospitalInput,
   validateHospitalInput,
@@ -49,10 +52,10 @@ export async function GET(_: Request, { params }: HospitalRouteProps) {
 }
 
 export async function PATCH(request: Request, { params }: HospitalRouteProps) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("registry.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const { id } = await params;
@@ -102,10 +105,10 @@ export async function PATCH(request: Request, { params }: HospitalRouteProps) {
 }
 
 export async function DELETE(_: Request, { params }: HospitalRouteProps) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("registry.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const { id } = await params;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
+import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export default async function ManufacturersPage({
   searchParams,
 }: ManufacturersPageProps) {
   const user = await getServerSessionUser();
+  const canManage = hasCapability(user, "registry.manage");
   const { q = "" } = await searchParams;
   const normalizedQuery = q.trim();
 
@@ -89,12 +91,14 @@ export default async function ManufacturersPage({
             >
               Open products
             </Link>
-            <Link
-              href="/registry/manufacturers/new"
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-            >
-              New manufacturer
-            </Link>
+            {canManage ? (
+              <Link
+                href="/registry/manufacturers/new"
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+              >
+                New manufacturer
+              </Link>
+            ) : null}
           </>
         }
       />
@@ -225,12 +229,14 @@ export default async function ManufacturersPage({
                         >
                           View
                         </Link>
-                        <Link
-                          href={`/registry/manufacturers/${manufacturer.id}/edit`}
-                          className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                          Edit
-                        </Link>
+                        {canManage ? (
+                          <Link
+                            href={`/registry/manufacturers/${manufacturer.id}/edit`}
+                            className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          >
+                            Edit
+                          </Link>
+                        ) : null}
                       </div>
                     </td>
                   </tr>

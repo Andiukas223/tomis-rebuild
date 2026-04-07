@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
 
@@ -49,6 +50,9 @@ export default async function SystemDetailPage({
     notFound();
   }
 
+  const canManageCatalog = hasCapability(user, "catalog.manage");
+  const canManageService = hasCapability(user, "service.manage");
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -63,24 +67,28 @@ export default async function SystemDetailPage({
             >
               Back to systems
             </Link>
-            <Link
-              href={`/catalog/systems/${system.id}/edit`}
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-            >
-              Edit system
-            </Link>
+            {canManageCatalog ? (
+              <Link
+                href={`/catalog/systems/${system.id}/edit`}
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+              >
+                Edit system
+              </Link>
+            ) : null}
             <Link
               href={`/service?systemId=${system.id}`}
               className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
             >
               View service
             </Link>
-            <Link
-              href={`/service/new?systemId=${system.id}`}
-              className="rounded-full bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-500"
-            >
-              New service case
-            </Link>
+            {canManageService ? (
+              <Link
+                href={`/service/new?systemId=${system.id}`}
+                className="rounded-full bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-500"
+              >
+                New service case
+              </Link>
+            ) : null}
           </>
         }
       />

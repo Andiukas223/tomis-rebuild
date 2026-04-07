@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { hasCapability } from "@/lib/permissions";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
+import { RestrictedAccess } from "@/components/app/restricted-access";
 import { ManufacturerForm } from "@/components/registry/manufacturer-form";
 
 type EditManufacturerPageProps = {
@@ -19,6 +21,16 @@ export default async function EditManufacturerPage({
 
   if (!user) {
     notFound();
+  }
+
+  if (!hasCapability(user, "registry.manage")) {
+    return (
+      <RestrictedAccess
+        eyebrow="Registry / Manufacturers"
+        title="Edit manufacturer"
+        description="Only registry managers can update manufacturer records."
+      />
+    );
   }
 
   const { id } = await params;

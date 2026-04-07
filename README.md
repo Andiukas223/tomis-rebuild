@@ -22,9 +22,9 @@ The rebuild now includes:
 - protected shell with sidebar, topbar, dashboard, and module routing
 - registry master data for hospitals, companies, and manufacturers
 - catalog modules for systems, products, and equipment
-- service operations with assignment, task checklists, attachments, notes, completion records, dispatch actions, reporting, and printable summaries
+- service operations with assignment, execution-focused task handling, attachments, notes, completion records, dispatch actions, reporting, and printable summaries
 - generated document records for saved service report snapshots
-- organization-scoped APIs and server-rendered detail pages
+- organization-scoped APIs, server-rendered detail pages, and role-aware access control
 
 Planning and reverse-engineering notes live one level above this app in the parent workspace documentation.
 
@@ -139,6 +139,7 @@ Key relationships:
 - `Equipment` references `Manufacturer` and can link to `System`
 - `ServiceCase` references `System`, optional `Equipment`, and optional assigned `User`
 - `ServiceTask`, `ServiceAttachment`, and `ServiceNote` all belong to `ServiceCase`
+- `ServiceTask` can also reference an assigned `User` plus due scheduling and execution notes
 - `ServiceAssignmentEvent` captures assignment ownership changes for `ServiceCase`
 - `GeneratedReport` stores saved document snapshots for filtered service operational summaries
 
@@ -195,6 +196,7 @@ Additional seeded service users:
 
 - `marius`
 - `ievag`
+- `ritag`
 
 Override the seed password with `SEED_ADMIN_PASSWORD` if needed.
 
@@ -217,11 +219,11 @@ docker compose up -d db
 
 Recommended next implementation slices:
 
-1. grouped KPI views and deeper slicing on service reports
-2. richer generated report records with naming, notes, and reusable output flows
-3. stronger role and permission enforcement
-4. test coverage for auth and critical service/catalog flows
-5. broader module expansion beyond service, catalog, and registry
+1. service workflow refinement and technician execution quality
+2. bug fixing and UX consistency across current modules
+3. tasks module
+4. warehouse foundation
+5. documents expansion
 
 ## Notes
 
@@ -231,3 +233,4 @@ Recommended next implementation slices:
 - linked registry records are protected from destructive actions when in active use
 - service reporting now supports technician, status, and date-range filtered review plus matching CSV export
 - printable service summaries can now be saved into `Documents` as stored report records
+- the next planning checkpoint now lives in `docs/ROADMAP.md`

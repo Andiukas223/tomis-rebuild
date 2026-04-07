@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth";
+import { hasCapability } from "@/lib/permissions";
 
 type AssignSuggestedTechnicianButtonProps = {
   serviceCaseId: string;
@@ -17,8 +19,13 @@ export function AssignSuggestedTechnicianButton({
   compact = false,
 }: AssignSuggestedTechnicianButtonProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  if (!hasCapability(user, "service.dispatch")) {
+    return null;
+  }
 
   return (
     <div className="space-y-2">

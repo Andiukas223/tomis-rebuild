@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getServerSessionUser } from "@/lib/server-session";
+import {
+  getServerSessionUser,
+  requireServerCapability,
+} from "@/lib/server-session";
 import {
   normalizeManufacturerInput,
   validateManufacturerInput,
@@ -54,10 +57,10 @@ export async function PATCH(
   request: Request,
   { params }: ManufacturerRouteProps,
 ) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("registry.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const { id } = await params;
@@ -115,10 +118,10 @@ export async function PATCH(
 }
 
 export async function DELETE(_: Request, { params }: ManufacturerRouteProps) {
-  const user = await getServerSessionUser();
+  const { user, response } = await requireServerCapability("registry.manage");
 
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (response || !user) {
+    return response!;
   }
 
   const { id } = await params;

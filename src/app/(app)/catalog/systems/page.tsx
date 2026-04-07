@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
+import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
 import { SystemsTable } from "@/components/catalog/systems-table";
 
@@ -21,6 +22,7 @@ export default async function SystemsPage({ searchParams }: SystemsPageProps) {
   if (!user) {
     return null;
   }
+  const canManage = hasCapability(user, "catalog.manage");
 
   const { q = "", status = "all" } = await searchParams;
   const normalizedQuery = q.trim();
@@ -119,12 +121,14 @@ export default async function SystemsPage({ searchParams }: SystemsPageProps) {
             >
               Export CSV
             </a>
-            <Link
-              href="/catalog/systems/new"
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-            >
-              New system
-            </Link>
+            {canManage ? (
+              <Link
+                href="/catalog/systems/new"
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+              >
+                New system
+              </Link>
+            ) : null}
           </>
         }
       />
@@ -174,6 +178,7 @@ export default async function SystemsPage({ searchParams }: SystemsPageProps) {
           q: normalizedQuery,
           status: normalizedStatus,
         }}
+        canManage={canManage}
       />
     </div>
   );
