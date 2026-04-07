@@ -20,6 +20,10 @@ type UpdateManufacturerBody = {
   code?: string | null;
   country?: string | null;
   website?: string | null;
+  supportEmail?: string | null;
+  supportPhone?: string | null;
+  productFocus?: string | null;
+  serviceNotes?: string | null;
 };
 
 export async function GET(_: Request, { params }: ManufacturerRouteProps) {

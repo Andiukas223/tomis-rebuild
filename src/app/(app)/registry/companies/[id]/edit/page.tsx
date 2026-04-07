@@ -51,7 +51,7 @@ export default async function EditCompanyPage({
       <PageHeader
         eyebrow="Registry / Companies"
         title={`Edit ${company.name}`}
-        description="This edit screen extends the registry master-data pattern to company records."
+        description="This edit flow uses the same Guided Intake structure as company creation so commercial registry data stays complete and reviewable."
       />
 
       <CompanyForm
@@ -60,8 +60,15 @@ export default async function EditCompanyPage({
         initialValues={{
           name: company.name,
           code: company.code ?? "",
+          vatCode: company.vatCode ?? "",
           city: company.city ?? "",
           country: company.country ?? "",
+          addressLine1: company.addressLine1 ?? "",
+          addressLine2: company.addressLine2 ?? "",
+          website: company.website ?? "",
+          contactName: company.contactName ?? "",
+          contactEmail: company.contactEmail ?? "",
+          contactPhone: company.contactPhone ?? "",
         }}
       />
     </div>

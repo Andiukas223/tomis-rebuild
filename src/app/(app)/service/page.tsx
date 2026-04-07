@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
 import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
+import { MetricStrip } from "@/components/app/metric-strip";
+import { CategoryIndexList } from "@/components/app/category-index-list";
 import { ServiceCasesTable } from "@/components/service/service-cases-table";
 
 export const dynamic = "force-dynamic";
@@ -397,7 +399,7 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Service"
-        title="Service operations"
+        title="Service"
         description={contextDescription}
         actions={
           <>
@@ -406,6 +408,12 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
               className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
             >
               Open reports
+            </Link>
+            <Link
+              href="/service/tasks"
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            >
+              Open task queue
             </Link>
             <Link
               href={
@@ -452,7 +460,7 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
       />
 
       {systemContext || equipmentContext ? (
-        <section className="rounded-[1.5rem] border border-sky-100 bg-sky-50/70 px-6 py-5 text-sm text-slate-700 shadow-[0_16px_40px_rgba(15,23,42,0.04)]">
+        <section className="rounded-[var(--radius-lg)] border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm text-slate-700 shadow-[var(--shadow-soft)]">
           <div className="flex flex-wrap items-center gap-3">
             {systemContext ? (
               <Link
@@ -480,153 +488,170 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
         </section>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Total cases
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {totalCases}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Open
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {openCases}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-sky-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
-            In progress
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {inProgressCases}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-rose-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
-            Critical
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {criticalCases}
-          </p>
-        </article>
-      </section>
+      <MetricStrip
+        items={[
+          { label: "Total cases", value: totalCases, detail: "Current filtered scope" },
+          { label: "Open", value: openCases, detail: "Waiting for action" },
+          { label: "In progress", value: inProgressCases, detail: "Work underway", tone: "accent" },
+          { label: "Critical", value: criticalCases, detail: "High-risk items", tone: "danger" },
+        ]}
+      />
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <article className="rounded-[1.5rem] border border-rose-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
-            Overdue
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {overdueCount}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Scheduled before today and still active.
-          </p>
-          <Link
-            href="/service?scheduleWindow=overdue"
-            className="mt-4 inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100"
-          >
-            Open overdue queue
-          </Link>
-        </article>
-        <article className="rounded-[1.5rem] border border-sky-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
-            Today
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {todayCount}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Cases scheduled for the current day.
-          </p>
-          <Link
-            href="/service?scheduleWindow=today"
-            className="mt-4 inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100"
-          >
-            Open today queue
-          </Link>
-        </article>
-        <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            Next 7 days
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {nextSevenCount}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Upcoming scheduled visits this week.
-          </p>
-          <Link
-            href="/service?scheduleWindow=next7"
-            className="mt-4 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
-          >
-            Open next 7 days
-          </Link>
-        </article>
-      </section>
+      <MetricStrip
+        items={[
+          {
+            label: "Task queue",
+            value: serviceCases.reduce((sum, item) => sum + item.tasks.length, 0),
+            detail: "Tasks in filtered cases",
+          },
+          {
+            label: "Overdue tasks",
+            value: serviceCases.reduce(
+              (sum, item) =>
+                sum +
+                item.tasks.filter(
+                  (task) =>
+                    task.dueAt &&
+                    task.dueAt < startOfToday &&
+                    !task.isCompleted,
+                ).length,
+              0,
+            ),
+            detail: "Need immediate follow-up",
+            tone: "danger",
+          },
+          {
+            label: "My tasks",
+            value: serviceCases.reduce(
+              (sum, item) =>
+                sum +
+                item.tasks.filter(
+                  (task) => task.assignedUserId === user?.id && !task.isCompleted,
+                ).length,
+              0,
+            ),
+            detail: "Assigned to current user",
+            tone: "accent",
+          },
+          {
+            label: "Unassigned",
+            value: unassignedCount,
+            detail: "Cases without owner",
+            tone: "warning",
+          },
+        ]}
+      />
 
-      <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <CategoryIndexList
+        eyebrow="Service index"
+        title="Queues and views"
+        items={[
+          {
+            title: "Operations",
+            href: "/service",
+            description: "Main indexed list of service cases across the current scope.",
+            count: totalCases,
+            meta: "Primary queue",
+          },
+          {
+            title: "Task queue",
+            href: "/service/tasks",
+            description: "Execution-focused task list for technicians and coordinators.",
+            count: serviceCases.reduce((sum, item) => sum + item.tasks.length, 0),
+            meta: "Task execution",
+          },
+          {
+            title: "Overdue queue",
+            href: "/service?scheduleWindow=overdue",
+            description: "Scheduled before today and still active.",
+            count: overdueCount,
+            meta: "Schedule risk",
+          },
+          {
+            title: "Today queue",
+            href: "/service?scheduleWindow=today",
+            description: "Cases scheduled for the current day.",
+            count: todayCount,
+            meta: "Daily work",
+          },
+          {
+            title: "Next 7 days",
+            href: "/service?scheduleWindow=next7",
+            description: "Upcoming scheduled visits this week.",
+            count: nextSevenCount,
+            meta: "Forward planning",
+          },
+          {
+            title: "Reports",
+            href: "/service/reports",
+            description: "Operational KPIs, technician metrics, and exports.",
+            count: "-",
+            meta: "Review and export",
+          },
+        ]}
+      />
+
+      <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-950">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              Workload
+            </p>
+            <h3 className="mt-1 text-base font-bold text-[var(--navy)]">
               Technician workload
             </h3>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
               Workload visibility helps keep assignment balanced and prevents critical cases from staying unowned.
             </p>
           </div>
-          <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+          <span className="rounded-[var(--radius-sm)] border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
             Unassigned cases: {unassignedCount}
           </span>
         </div>
         <div className="mt-4">
           <Link
             href="/service?assigneeId=unassigned"
-            className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
+            className="inline-flex rounded-[var(--radius-sm)] border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
           >
             Open unassigned queue
           </Link>
         </div>
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {workloadSummary.map((assignee) => (
             <article
               key={assignee.id}
-              className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] p-4"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h4 className="text-base font-semibold text-slate-950">
+                  <h4 className="text-sm font-semibold text-slate-950">
                     {assignee.fullName}
                   </h4>
-                  <p className="mt-1 text-sm text-slate-600">
+                  <p className="mt-1 text-xs text-slate-600">
                     Active: {assignee.activeCount}
                   </p>
                 </div>
                 <Link
                   href={`/service?assigneeId=${assignee.id}`}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                  className="rounded-[var(--radius-sm)] border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
                 >
                   View
                 </Link>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-2xl bg-white px-4 py-3">
+              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-[var(--radius-sm)] bg-white px-3 py-2.5">
                   <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
                     Critical
                   </p>
-                  <p className="mt-2 text-xl font-semibold text-slate-950">
+                  <p className="mt-2 text-lg font-semibold text-slate-950">
                     {assignee.criticalCount}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-white px-4 py-3">
+                <div className="rounded-[var(--radius-sm)] bg-white px-3 py-2.5">
                   <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
                     Done ratio
                   </p>
-                  <p className="mt-2 text-xl font-semibold text-slate-950">
+                  <p className="mt-2 text-lg font-semibold text-slate-950">
                     {assignee.completionLabel}
                   </p>
                 </div>

@@ -22,7 +22,7 @@ export default async function NewHospitalPage() {
       <PageHeader
         eyebrow="Registry / Hospitals"
         title="Create hospital"
-        description="This create flow establishes the editable registry pattern for master data screens in the rebuild."
+        description="This is the first live Guided Intake Flow pilot in the rebuild. It captures hospital identity, address, contacts, and service context step by step before the record becomes reusable registry data."
       />
 
       <HospitalForm mode="create" />

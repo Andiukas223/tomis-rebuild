@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ServiceTaskHistoryList } from "@/components/service/service-task-history-list";
 
 type AssigneeOption = {
   id: string;
@@ -18,6 +19,16 @@ type ServiceTaskExecutionCardProps = {
     assignedUserId: string;
     assignedUserName: string | null;
     completedAtLabel: string | null;
+    events: Array<{
+      id: string;
+      eventType: string;
+      createdAtLabel: string;
+      changedByName: string | null;
+      previousAssigneeName: string | null;
+      newAssigneeName: string | null;
+      previousCompleted: boolean | null;
+      newCompleted: boolean | null;
+    }>;
   };
   assignees: AssigneeOption[];
   canManage: boolean;
@@ -208,6 +219,15 @@ export function ServiceTaskExecutionCard({
 
       {savedState ? <p className="mt-2 text-xs text-emerald-700">{savedState}</p> : null}
       {error ? <p className="mt-2 text-xs text-rose-700">{error}</p> : null}
+
+      <div className="mt-4 border-t border-slate-200 pt-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+          Task history
+        </p>
+        <div className="mt-3">
+          <ServiceTaskHistoryList events={task.events} />
+        </div>
+      </div>
     </div>
   );
 }

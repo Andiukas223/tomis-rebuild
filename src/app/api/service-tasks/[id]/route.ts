@@ -46,6 +46,8 @@ export async function PATCH(request: Request, { params }: ServiceTaskRouteProps)
     return NextResponse.json({ message: "Due date is invalid." }, { status: 400 });
   }
 
+  let nextAssigneeName: string | null = null;
+
   if (assignedUserId) {
     const assignee = await db.user.findFirst({
       where: {
@@ -61,7 +63,22 @@ export async function PATCH(request: Request, { params }: ServiceTaskRouteProps)
         { status: 400 },
       );
     }
+
+    nextAssigneeName = assignee.fullName;
   }
+
+  const existingAssignee = existing.assignedUserId
+    ? await db.user.findFirst({
+        where: {
+          id: existing.assignedUserId,
+          organizationId: user.organizationId,
+        },
+        select: {
+          id: true,
+          fullName: true,
+        },
+      })
+    : null;
 
   const task = await db.serviceTask.update({
     where: { id },
@@ -94,6 +111,42 @@ export async function PATCH(request: Request, { params }: ServiceTaskRouteProps)
       },
     },
   });
+
+  const nextTitle = typeof title === "string" && title.length > 0 ? title : existing.title;
+  const nextNotes = notes;
+  const nextDueAt = dueAt ? new Date(dueAt) : null;
+  const nextCompleted =
+    typeof isCompleted === "boolean" ? isCompleted : existing.isCompleted;
+  const nextAssigneeId = assignedUserId;
+
+  const hasChanged =
+    nextTitle !== existing.title ||
+    nextNotes !== existing.notes ||
+    (nextDueAt?.getTime() ?? null) !== (existing.dueAt?.getTime() ?? null) ||
+    nextCompleted !== existing.isCompleted ||
+    nextAssigneeId !== existing.assignedUserId;
+
+  if (hasChanged) {
+    await db.serviceTaskEvent.create({
+      data: {
+        serviceTaskId: existing.id,
+        changedById: user.id,
+        eventType: nextCompleted !== existing.isCompleted ? "status-update" : "task-update",
+        previousTitle: existing.title,
+        newTitle: nextTitle,
+        previousNotes: existing.notes,
+        newNotes: nextNotes,
+        previousDueAt: existing.dueAt,
+        newDueAt: nextDueAt,
+        previousCompleted: existing.isCompleted,
+        newCompleted: nextCompleted,
+        previousAssigneeId: existing.assignedUserId,
+        previousAssigneeName: existingAssignee?.fullName ?? null,
+        newAssigneeId: nextAssigneeId,
+        newAssigneeName: nextAssigneeName,
+      },
+    });
+  }
 
   return NextResponse.json({ task }, { status: 200 });
 }

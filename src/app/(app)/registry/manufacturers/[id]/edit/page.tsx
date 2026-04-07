@@ -51,7 +51,7 @@ export default async function EditManufacturerPage({
       <PageHeader
         eyebrow="Registry / Manufacturers"
         title={`Edit ${manufacturer.name}`}
-        description="This edit screen extends the registry master-data pattern to manufacturer records."
+        description="This edit flow uses the same Guided Intake structure as manufacturer creation so vendor support data stays complete and reviewable."
       />
 
       <ManufacturerForm
@@ -62,6 +62,10 @@ export default async function EditManufacturerPage({
           code: manufacturer.code ?? "",
           country: manufacturer.country ?? "",
           website: manufacturer.website ?? "",
+          supportEmail: manufacturer.supportEmail ?? "",
+          supportPhone: manufacturer.supportPhone ?? "",
+          productFocus: manufacturer.productFocus ?? "",
+          serviceNotes: manufacturer.serviceNotes ?? "",
         }}
       />
     </div>

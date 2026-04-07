@@ -81,6 +81,7 @@ const navigationCapabilityMap: Record<string, AppCapability> = {
   "/catalog/equipment": "catalog.view",
   "/sales": "sales.view",
   "/service": "service.view",
+  "/service/tasks": "service.view",
   "/service/reports": "service.reports",
   "/tasks": "tasks.view",
   "/warehouse": "warehouse.view",

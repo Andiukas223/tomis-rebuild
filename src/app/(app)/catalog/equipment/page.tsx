@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
 import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
+import { MetricStrip } from "@/components/app/metric-strip";
+import { CategoryIndexList } from "@/components/app/category-index-list";
 import { EquipmentTable } from "@/components/catalog/equipment-table";
 
 export const dynamic = "force-dynamic";
@@ -134,12 +136,12 @@ export default async function EquipmentPage({
       <PageHeader
         eyebrow="Catalog / Equipment"
         title="Equipment"
-        description="Equipment extends the catalog beyond products and gives the rebuild a reusable technical asset register tied to manufacturers and systems."
+        description="Compact technical asset register linked to manufacturers and installed systems."
         actions={
           <>
             <Link
               href="/catalog/equipment"
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Refresh
             </Link>
@@ -153,14 +155,14 @@ export default async function EquipmentPage({
                   ? { system: normalizedSystem }
                   : {}),
               }).toString()}`}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Export CSV
             </a>
             {canManage ? (
               <Link
                 href="/catalog/equipment/new"
-                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+                className="rounded-[var(--radius-sm)] bg-[var(--navy)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--navy-mid)]"
               >
                 New equipment
               </Link>
@@ -169,40 +171,68 @@ export default async function EquipmentPage({
         }
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Total equipment
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {totalEquipment}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            Active
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {activeEquipment}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-amber-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-            Maintenance
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {maintenanceEquipment}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-sky-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
-            Linked to systems
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {assignedEquipment}
-          </p>
-        </article>
-      </section>
+      <MetricStrip
+        items={[
+          {
+            label: "Total equipment",
+            value: totalEquipment,
+            detail: "Indexed technical asset records",
+          },
+          {
+            label: "Active",
+            value: activeEquipment,
+            detail: "Ready for field use",
+            tone: "success",
+          },
+          {
+            label: "Maintenance",
+            value: maintenanceEquipment,
+            detail: "Require technical review",
+            tone: "warning",
+          },
+          {
+            label: "Linked to systems",
+            value: assignedEquipment,
+            detail: "Assigned to installed systems",
+            tone: "accent",
+          },
+        ]}
+      />
+
+      <CategoryIndexList
+        eyebrow="Equipment views"
+        title="Working lists"
+        items={[
+          {
+            title: "All equipment",
+            href: "/catalog/equipment",
+            description: "Full asset register across assigned and unassigned items.",
+            count: totalEquipment,
+            meta: "Master list",
+          },
+          {
+            title: "Assigned equipment",
+            href: "/catalog/equipment?system=assigned",
+            description: "Equipment already linked to live systems.",
+            count: assignedEquipment,
+            meta: "Installed",
+          },
+          {
+            title: "Maintenance equipment",
+            href: "/catalog/equipment?status=Maintenance",
+            description: "Assets currently marked for technical attention.",
+            count: maintenanceEquipment,
+            meta: "Attention",
+          },
+          {
+            title: "Unassigned equipment",
+            href: "/catalog/equipment?system=unassigned",
+            description: "Loose inventory not yet attached to a system record.",
+            count: totalEquipment - assignedEquipment,
+            meta: "Pending",
+          },
+        ]}
+      />
 
       <EquipmentTable
         equipment={equipment.map((item) => ({

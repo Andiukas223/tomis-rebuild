@@ -1,10 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --font-sans: "Segoe UI", "Aptos", "Trebuchet MS", Helvetica, Arial, sans-serif;
-  --font-mono: "Cascadia Code", "Consolas", "SFMono-Regular", "Liberation Mono",
+  --background: #f2f4f8;
+  --foreground: #141e38;
+  --navy: #0f2352;
+  --navy-mid: #1a3570;
+  --navy-light: #2a4fa8;
+  --navy-pale: #e8edf8;
+  --orange: #e07020;
+  --orange-light: #fff3e8;
+  --orange-dark: #b85a10;
+  --steel: #6b7fa8;
+  --steel-light: #c8d0e0;
+  --surface: #ffffff;
+  --text-mid: #3a4868;
+  --text-muted: #7a88a8;
+  --border: #dde2ee;
+  --border-strong: #c8d0e0;
+  --radius-sm: 5px;
+  --radius-lg: 8px;
+  --shadow-soft: 0 1px 4px rgba(15, 35, 82, 0.08);
+  --shadow-medium: 0 3px 12px rgba(15, 35, 82, 0.12);
+  --font-sans: "Trebuchet MS", "Segoe UI", "Aptos", Helvetica, Arial, sans-serif;
+  --font-mono: "Consolas", "Cascadia Code", "SFMono-Regular", "Liberation Mono",
     monospace;
 }
 
@@ -28,9 +46,46 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   margin: 0;
+  font-size: 14px;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+a:visited {
+  color: inherit;
+}
+
+/* Keep filled action links readable across normal, visited, and hover states. */
+a[class*="bg-slate-950"],
+a[class*="bg-slate-800"],
+button[class*="bg-slate-950"],
+button[class*="bg-slate-800"] {
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+}
+
+a[class*="bg-slate-950"]:visited,
+a[class*="bg-slate-800"]:visited,
+a[class*="bg-slate-950"]:hover,
+a[class*="bg-slate-800"]:hover,
+button[class*="bg-slate-950"]:hover,
+button[class*="bg-slate-800"]:hover {
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+}
+
+a[class*="bg-[#ff8b2b]"],
+button[class*="bg-[#ff8b2b]"],
+a[class*="bg-[var(--navy)]"],
+button[class*="bg-[var(--navy)]"] {
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+}
+
+::selection {
+  background: rgba(224, 112, 32, 0.18);
+  color: var(--foreground);
 }

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
-import { StatCard } from "@/components/app/stat-card";
+import { MetricStrip } from "@/components/app/metric-strip";
+import { CategoryIndexList } from "@/components/app/category-index-list";
 import { AssignSuggestedTechnicianButton } from "@/components/service/assign-suggested-technician-button";
 import { navigationGroups } from "@/lib/navigation";
 import { getNavigationGroupsForRole, hasCapability } from "@/lib/permissions";
@@ -197,8 +198,8 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Protected area"
-        title="Dashboard and module launcher"
-        description="This page now acts as the daily launch point for active assets, dispatch decisions, and service work."
+        title="Dashboard"
+        description="Compact launch point for current workload, service pressure, and module indexes."
         actions={
           <>
             <Link
@@ -206,6 +207,12 @@ export default async function DashboardPage() {
               className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
             >
               Open service
+            </Link>
+            <Link
+              href="/service/tasks"
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            >
+              Open task queue
             </Link>
             {canManageService ? (
               <Link
@@ -219,43 +226,88 @@ export default async function DashboardPage() {
         }
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Systems"
-          value={String(systemsCount)}
-          detail="Installed systems currently tracked across the organization."
-        />
-        <StatCard
-          label="Equipment"
-          value={String(equipmentCount)}
-          detail="Equipment assets available for system and service workflows."
-        />
-        <StatCard
-          label="Active Service"
-          value={String(openServiceCount)}
-          detail="Open, planned, and in-progress cases that still need action."
-        />
-        <StatCard
-          label="Critical Cases"
-          value={String(criticalServiceCount)}
-          detail="High-risk service items that should stay visible from the front page."
-        />
-      </section>
+      <MetricStrip
+        items={[
+          {
+            label: "Systems",
+            value: systemsCount,
+            detail: "Tracked installed systems",
+          },
+          {
+            label: "Equipment",
+            value: equipmentCount,
+            detail: "Technical asset records",
+          },
+          {
+            label: "Active service",
+            value: openServiceCount,
+            detail: "Open, planned, in progress",
+            tone: "accent",
+          },
+          {
+            label: "Critical",
+            value: criticalServiceCount,
+            detail: "Need front-page visibility",
+            tone: "danger",
+          },
+        ]}
+      />
+
+      <CategoryIndexList
+        eyebrow="Dashboard index"
+        title="Main operating views"
+        items={[
+          {
+            title: "Service queue",
+            href: "/service",
+            description: "Primary indexed list of active service cases and filters.",
+            count: openServiceCount,
+            meta: "Operations",
+          },
+          {
+            title: "Task queue",
+            href: "/service/tasks",
+            description: "Technician execution queue with due dates and task history.",
+            count: activeServiceCases.reduce(
+              (sum, item) => sum + item.tasks.length,
+              0,
+            ),
+            meta: "Execution",
+          },
+          {
+            title: "Reports",
+            href: "/service/reports",
+            description: "Operational metrics, dispatch review, and exports.",
+            count: "-",
+            meta: "Review",
+          },
+          {
+            title: "Documents",
+            href: "/documents",
+            description: "Saved report records and generated document history.",
+            count: "-",
+            meta: "History",
+          },
+        ]}
+      />
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        <section className="rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-          <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+        <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)]">
+          <div className="flex flex-col gap-3 border-b border-[var(--border)] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                Service index
+              </p>
+              <h3 className="mt-1 text-base font-bold text-[var(--navy)]">
                 Recent service activity
               </h3>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
                 The latest operational work linked to systems and equipment.
               </p>
             </div>
             <Link
               href="/service"
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-xs font-semibold text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Open service
             </Link>
@@ -322,27 +374,27 @@ export default async function DashboardPage() {
         </section>
 
         <section className="grid gap-4">
-          <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+          <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                   Workload
                 </p>
-                <h3 className="mt-2 text-2xl font-semibold text-slate-950">
+                <h3 className="mt-1 text-base font-bold text-[var(--navy)]">
                   Technician planning
                 </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
+                <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
                   A quick view of who owns active service work right now and where unassigned cases still need attention.
                 </p>
               </div>
               <Link
                 href="/service"
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-xs font-semibold text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
               >
                 Open queue
               </Link>
             </div>
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <Link
                   href="/service?scheduleWindow=overdue"
@@ -373,7 +425,7 @@ export default async function DashboardPage() {
               >
                 Unassigned recent cases: {unassignedRecentCount}
               </Link>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4">
+              <div className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -415,7 +467,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <div className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-white px-4 py-3">
                     <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
                       Suggested next technician
                     </p>
@@ -430,7 +482,7 @@ export default async function DashboardPage() {
                         : "Add service users to begin balancing assignments."}
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <div className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-white px-4 py-3">
                     <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
                       Top unassigned case
                     </p>
@@ -468,10 +520,7 @@ export default async function DashboardPage() {
                 </div>
               </div>
               {workloadRows.map((row) => (
-                <div
-                  key={row.id}
-                  className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3"
-                >
+                <div key={row.id} className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-slate-950">
@@ -494,6 +543,12 @@ export default async function DashboardPage() {
                   <p className="mt-1 text-xs text-slate-500">
                     Overdue assigned: {row.overdueCount}
                   </p>
+                  <Link
+                    href={`/service/tasks?assigneeId=${row.id}`}
+                    className="mt-3 inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+                  >
+                    Open task queue
+                  </Link>
                   {row.activeCount >= 3 || row.overdueCount > 0 ? (
                     <p className="mt-3 inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-medium text-rose-700">
                       Dispatch attention needed
@@ -508,37 +563,34 @@ export default async function DashboardPage() {
             </div>
           </article>
 
-          <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+          <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                   Schedule
                 </p>
-                <h3 className="mt-2 text-2xl font-semibold text-slate-950">
+                <h3 className="mt-1 text-base font-bold text-[var(--navy)]">
                   Upcoming visits
                 </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
+                <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
                   The next scheduled service work, ordered by due date.
                 </p>
               </div>
               <Link
                 href="/service?scheduleWindow=next7"
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-xs font-semibold text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
               >
                 View week
               </Link>
             </div>
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 space-y-3">
               {upcomingScheduledCases.length === 0 ? (
                 <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
                   No scheduled visits in the active queue yet.
                 </p>
               ) : (
                 upcomingScheduledCases.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3"
-                  >
+                  <div key={item.id} className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <Link
@@ -564,37 +616,34 @@ export default async function DashboardPage() {
           </article>
 
           {visibleGroups.map((group) => (
-            <article
-              key={group.label}
-              className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]"
-            >
+            <article key={group.label} className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                     Module
                   </p>
-                  <h3 className="mt-2 text-2xl font-semibold text-slate-950">
+                  <h3 className="mt-1 text-base font-bold text-[var(--navy)]">
                     {group.label}
                   </h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
                     {group.description}
                   </p>
                 </div>
                 <Link
                   href={group.href}
-                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                  className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-xs font-semibold text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
                 >
                   Open
                 </Link>
               </div>
 
               {group.children?.length ? (
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   {group.children.map((child) => (
                     <Link
                       key={child.href}
                       href={child.href}
-                      className="rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-200"
+                      className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs font-semibold text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
                     >
                       {child.label}
                     </Link>

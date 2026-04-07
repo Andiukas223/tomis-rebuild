@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
 import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
+import { MetricStrip } from "@/components/app/metric-strip";
+import { CategoryIndexList } from "@/components/app/category-index-list";
 import { RestrictedAccess } from "@/components/app/restricted-access";
 import {
   ReportHistoryTable,
@@ -195,8 +197,8 @@ export default async function DocumentsPage({
     <div className="space-y-6">
       <PageHeader
         eyebrow="Documents"
-        title="Generated reports"
-        description="Stored operational summaries and generated document records available for review and reuse."
+        title="Documents"
+        description="Compact history and filter view for generated report records."
         actions={
           canOpenServiceReports ? (
             <Link
@@ -209,10 +211,37 @@ export default async function DocumentsPage({
         }
       />
 
-      <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+      <MetricStrip
+        items={[
+          {
+            label: "Stored reports",
+            value: reports.length,
+            detail: "Records in current scope",
+          },
+          {
+            label: "Window",
+            value: windowLabel,
+            detail: "Active date filter",
+            tone: "accent",
+          },
+          {
+            label: "Latest author",
+            value: reports[0]?.createdBy?.fullName ?? "No records",
+            detail: "Newest matching record",
+          },
+          {
+            label: "Pinned",
+            value: reports.filter((report) => report.isPinned).length,
+            detail: "Important saved reports",
+            tone: "warning",
+          },
+        ]}
+      />
+
+      <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
         <form
           action="/documents"
-          className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_220px_220px_220px_220px_220px_auto_auto]"
+          className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_220px_220px_220px_220px_220px_auto_auto]"
         >
           <input
             type="text"
@@ -309,61 +338,52 @@ export default async function DocumentsPage({
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Stored reports
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {reports.length}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Report records matching the current document filters.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Active window
-          </p>
-          <p className="mt-3 text-2xl font-semibold text-slate-950">
-            {windowLabel}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Date scope currently applied to generated document history.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Latest author
-          </p>
-          <p className="mt-3 text-2xl font-semibold text-slate-950">
-            {reports[0]?.createdBy?.fullName ?? "No records"}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Generated reports keep an author trail for later review.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Pinned
-          </p>
-          <p className="mt-3 text-2xl font-semibold text-slate-950">
-            {reports.filter((report) => report.isPinned).length}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Important saved reports currently pinned to the top of history.
-          </p>
-        </article>
-      </section>
+      <CategoryIndexList
+        eyebrow="Documents index"
+        title="Saved report views"
+        items={[
+          {
+            title: "All reports",
+            href: "/documents",
+            description: "Full document history across the current organization.",
+            count: reports.length,
+            meta: "History",
+          },
+          {
+            title: "Draft view",
+            href: "/documents?workflowStatus=Draft",
+            description: "Reports still being prepared and reviewed internally.",
+            count: reportsByStatus.Draft ?? 0,
+            meta: "In progress",
+          },
+          {
+            title: "Shared view",
+            href: "/documents?workflowStatus=Shared",
+            description: "Reports ready for handoff and broader team visibility.",
+            count: reportsByStatus.Shared ?? 0,
+            meta: "Published",
+          },
+          {
+            title: "Archived view",
+            href: "/documents?workflowStatus=Archived",
+            description: "Historical records kept for traceability and review.",
+            count: reportsByStatus.Archived ?? 0,
+            meta: "Archive",
+          },
+        ]}
+      />
 
       <section className="grid gap-4 xl:grid-cols-3">
-        <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+        <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                Grouping
+              </p>
+              <h3 className="mt-1 text-base font-bold text-[var(--navy)]">
                 Report history by type
               </h3>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
                 Quick grouping of saved report records in the current filtered view.
               </p>
             </div>
@@ -392,13 +412,16 @@ export default async function DocumentsPage({
           </div>
         </article>
 
-        <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+        <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                Grouping
+              </p>
+              <h3 className="mt-1 text-base font-bold text-[var(--navy)]">
                 Recent generation dates
               </h3>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
                 Latest saved-report activity grouped by day.
               </p>
             </div>
@@ -427,13 +450,16 @@ export default async function DocumentsPage({
           </div>
         </article>
 
-        <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+        <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                Grouping
+              </p>
+              <h3 className="mt-1 text-base font-bold text-[var(--navy)]">
                 Workflow states
               </h3>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
                 Draft, shared, and archived distribution for the current filtered view.
               </p>
             </div>
@@ -463,13 +489,16 @@ export default async function DocumentsPage({
         </article>
       </section>
 
-      <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+      <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-950">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              Main list
+            </p>
+            <h3 className="mt-1 text-base font-bold text-[var(--navy)]">
               Generated document records
             </h3>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
               Saved report snapshots preserve the KPI state at the time of generation.
             </p>
           </div>

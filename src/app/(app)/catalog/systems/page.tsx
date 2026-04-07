@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
 import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
+import { MetricStrip } from "@/components/app/metric-strip";
+import { CategoryIndexList } from "@/components/app/category-index-list";
 import { SystemsTable } from "@/components/catalog/systems-table";
 
 export const dynamic = "force-dynamic";
@@ -100,13 +102,13 @@ export default async function SystemsPage({ searchParams }: SystemsPageProps) {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Catalog / Systems"
-        title="Systems reference screen"
-        description="This page is the first concrete business screen in the rebuild. It is intentionally modeled as the baseline CRUD experience that future modules will reuse and refine."
+        title="Systems"
+        description="Indexed system register with compact status visibility and a list-first working view."
         actions={
           <>
             <Link
               href="/catalog/systems"
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Refresh
             </Link>
@@ -117,14 +119,14 @@ export default async function SystemsPage({ searchParams }: SystemsPageProps) {
                   ? { status: normalizedStatus }
                   : {}),
               }).toString()}`}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Export CSV
             </a>
             {canManage ? (
               <Link
                 href="/catalog/systems/new"
-                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+                className="rounded-[var(--radius-sm)] bg-[var(--navy)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--navy-mid)]"
               >
                 New system
               </Link>
@@ -133,40 +135,67 @@ export default async function SystemsPage({ searchParams }: SystemsPageProps) {
         }
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Total systems
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {totalSystems}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            Active
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {activeSystems}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-amber-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-            Maintenance
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {maintenanceSystems}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Inactive
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {inactiveSystems}
-          </p>
-        </article>
-      </section>
+      <MetricStrip
+        items={[
+          {
+            label: "Total systems",
+            value: totalSystems,
+            detail: "Indexed system records",
+          },
+          {
+            label: "Active",
+            value: activeSystems,
+            detail: "Ready for normal operation",
+            tone: "success",
+          },
+          {
+            label: "Maintenance",
+            value: maintenanceSystems,
+            detail: "Require service attention",
+            tone: "warning",
+          },
+          {
+            label: "Inactive",
+            value: inactiveSystems,
+            detail: "Removed from active use",
+          },
+        ]}
+      />
+
+      <CategoryIndexList
+        eyebrow="Systems views"
+        title="Working lists"
+        items={[
+          {
+            title: "All systems",
+            href: "/catalog/systems",
+            description: "Full indexed register across the current organization.",
+            count: totalSystems,
+            meta: "Master list",
+          },
+          {
+            title: "Active systems",
+            href: "/catalog/systems?status=Active",
+            description: "Operational records ready for normal service use.",
+            count: activeSystems,
+            meta: "In use",
+          },
+          {
+            title: "Maintenance queue",
+            href: "/catalog/systems?status=Maintenance",
+            description: "Systems currently flagged for technical review or work.",
+            count: maintenanceSystems,
+            meta: "Attention",
+          },
+          {
+            title: "Inactive systems",
+            href: "/catalog/systems?status=Inactive",
+            description: "Archived or decommissioned system entries.",
+            count: inactiveSystems,
+            meta: "Archive",
+          },
+        ]}
+      />
 
       <SystemsTable
         systems={systems.map((system) => ({

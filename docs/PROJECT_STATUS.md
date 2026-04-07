@@ -10,6 +10,7 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 - service operations with dispatch, execution-focused task handling, attachments, notes, completion records, reporting, and printable summaries
 - document records for saved generated service reports
 - role-aware shell filtering plus broad route and API permission enforcement
+- shared compact GUI pass across major module landing pages and queued categories
 
 ## Completed Foundations
 
@@ -33,13 +34,17 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 - `equipment` list, detail, create, edit, delete
 - manufacturer-linked catalog relationships
 - equipment-to-system linking
+- compact page-level metric strip and indexed working-view layouts for systems, products, and equipment
 
 ### Registry
 
-- `hospitals` list, detail, create, edit, delete when unlinked
-- `companies` list, detail, create, edit, delete
-- `manufacturers` list, detail, create, edit, delete when unlinked
+- `hospitals` list, detail, guided create/edit flow, delete when unlinked
+- `companies` list, detail, guided create/edit flow, delete
+- `manufacturers` list, detail, guided create/edit flow, delete when unlinked
 - relation-aware deletion guards
+- expanded registry fields for hospital, company, and manufacturer context
+- Registry-wide Guided Intake Flow rollout is now live
+- compact list-first registry landing and list-page layouts are now aligned more closely with the prototype density goals
 
 ### Service
 
@@ -48,6 +53,7 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 - technician assignment from list, dashboard suggestion, and API
 - assignment change audit history
 - task checklists with per-task assignee, due date, notes, and execution updates
+- task history events and technician-focused task queue views
 - attachment upload, download, and delete
 - service notes create, edit, and delete
 - service completion records with follow-up tracking
@@ -55,6 +61,7 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 - dashboard visibility for service operations and dispatch pressure
 - service reports page with filtered KPIs and CSV-aligned exports
 - printable service operational summary route
+- compact page-level service operations, task queue, and reports layouts with top metric strips and indexed view blocks
 
 ### Documents
 
@@ -62,6 +69,7 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 - generated report detail pages with saved KPI snapshots
 - save-from-report workflow for service operational summaries
 - saved report print views, HTML download output, pinning, workflow status, labels, and bulk list actions
+- compact documents overview layout with slim metrics and indexed history views
 
 ### Permissions
 
@@ -76,7 +84,7 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 Priority order from highest impact to lowest:
 
 1. service workflow refinement
-2. visual parity and guided intake flow rollout
+2. compact GUI parity inside list and table surfaces
 3. bug fixing and UX consistency pass
 4. tasks module
 5. warehouse foundation
@@ -128,16 +136,23 @@ Detailed milestone breakdown:
 - login page does not yet auto-forward valid sessions again after the loop fix
 - the attachment route triggers a non-blocking Turbopack tracing warning during build
 - there is still no dedicated Administration UI for managing users and role assignments
-- service task execution history is not yet tracked as its own audit trail
 - there is no standalone Tasks module yet, even though service tasks are now richer
 - automated tests are still missing for most critical workflows
-- the frontend still does not visually match the Tradintek prototype closely enough
-- `Guided Intake Flow` is documented but not yet implemented in Registry
+- the frontend still does not visually match the Tradintek prototype closely enough outside Registry
+- table internals and filter bars still need a dedicated compact parity pass in Catalog, Service, and Documents
+- service task queue and history are still nested under Service rather than a standalone Tasks module
 
 ## Next Recommended Steps
 
-1. deepen service workflow with task history, technician-focused task queues, and stronger planning views
-2. capture the prototype visual system in the frontend and implement the first `Guided Intake Flow` in Registry
+1. deepen service workflow with stronger planning views and broader technician execution coverage
+2. compact the table, filter, and list internals in Catalog, Service, and Documents
 3. run a bug and UX consistency pass across Documents, Service, Catalog, and the new permission states
 4. start the dedicated Tasks module using the richer service-task model as the foundation
 5. begin Warehouse foundations for service-linked stock usage
+
+## Active GUI Work
+
+- shared shell recoloring is underway using the prototype palette
+- topbar, sidebar, page-header, and stat-card styling are being aligned to the prototype's navy, orange, border, and radius rules
+- compact category pages are now live across Dashboard, Catalog, Registry, Service, Documents, and queued module placeholders
+- the next GUI slice is deeper table and filter parity so the inside of working pages matches the newer shell and page-level layout

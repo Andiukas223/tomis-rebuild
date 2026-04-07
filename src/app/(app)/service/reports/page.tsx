@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getServerSessionUser } from "@/lib/server-session";
 import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
+import { MetricStrip } from "@/components/app/metric-strip";
+import { CategoryIndexList } from "@/components/app/category-index-list";
 import { SaveServiceReportButton } from "@/components/service/save-service-report-button";
 import {
   buildServiceReportQuery,
@@ -66,16 +68,108 @@ export default async function ServiceReportsPage({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+      <PageHeader
+        eyebrow="Service / Reports"
+        title="Service reports"
+        description="Compact operational review for coverage, aging, throughput, and technician performance."
+        actions={
+          <>
+            <Link
+              href="/service"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
+            >
+              Back to operations
+            </Link>
+            <Link
+              href={reportQuery ? `/service/reports/print?${reportQuery}` : "/service/reports/print"}
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
+            >
+              Printable summary
+            </Link>
+            <SaveServiceReportButton filters={filters} />
+            <Link
+              href={reportQuery ? `/api/service-cases/export?${reportQuery}` : "/api/service-cases/export"}
+              className="rounded-[var(--radius-sm)] bg-[var(--navy)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--navy-mid)]"
+            >
+              Export CSV
+            </Link>
+          </>
+        }
+      />
+
+      <MetricStrip
+        items={[
+          {
+            label: "Assignment coverage",
+            value: `${assignmentCoverage.toFixed(0)}%`,
+            detail: "Active cases currently owned by a technician",
+          },
+          {
+            label: "Critical unassigned",
+            value: criticalUnassignedCases.length,
+            detail: "High-risk cases without ownership",
+            tone: "danger",
+          },
+          {
+            label: "Avg active age",
+            value: formatHours(avgActiveAgeHours),
+            detail: "Mean age of live service work",
+            tone: "accent",
+          },
+          {
+            label: "Avg completion",
+            value: formatHours(avgCompletionHours),
+            detail: "Mean time from creation to done",
+            tone: "success",
+          },
+        ]}
+      />
+
+      <CategoryIndexList
+        eyebrow="Report views"
+        title="Reporting slices"
+        items={[
+          {
+            title: "All technicians",
+            href: "/service/reports",
+            description: "Full operational overview across all active service ownership.",
+            count: technicianRows.length,
+            meta: "Main view",
+          },
+          {
+            title: "Unassigned focus",
+            href: "/service/reports?assigneeId=unassigned",
+            description: "Highlight cases that still need technician ownership.",
+            count: criticalUnassignedCases.length,
+            meta: "Dispatch",
+          },
+          {
+            title: "Open work",
+            href: "/service/reports?status=Open",
+            description: "Filter the report to newly opened unresolved service work.",
+            count: "-",
+            meta: "Status",
+          },
+          {
+            title: "Done work",
+            href: "/service/reports?status=Done",
+            description: "Review completed cases and completion-time trends.",
+            count: "-",
+            meta: "Review",
+          },
+        ]}
+      />
+
+      <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
         <form
           action="/service/reports"
-          className="grid gap-4 lg:grid-cols-[220px_220px_220px_220px_auto_auto]"
+          className="grid gap-3 lg:grid-cols-[220px_220px_220px_220px_auto_auto]"
         >
           <select
             name="assigneeId"
             defaultValue={filters.assigneeId}
             aria-label="Filter reports by technician"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+            className="w-full rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
           >
             <option value="">All technicians</option>
             <option value="unassigned">Unassigned</option>
@@ -89,7 +183,7 @@ export default async function ServiceReportsPage({
             name="status"
             defaultValue={filters.status}
             aria-label="Filter reports by status"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+            className="w-full rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
           >
             <option value="">All statuses</option>
             <option value="Open">Open</option>
@@ -102,130 +196,56 @@ export default async function ServiceReportsPage({
             name="dateFrom"
             defaultValue={filters.dateFrom}
             aria-label="Filter reports from date"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+            className="w-full rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
           />
           <input
             type="date"
             name="dateTo"
             defaultValue={filters.dateTo}
             aria-label="Filter reports to date"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+            className="w-full rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
           />
           <button
             type="submit"
-            className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+            className="rounded-[var(--radius-sm)] bg-[var(--navy)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--navy-mid)]"
           >
             Apply
           </button>
           <Link
             href="/service/reports"
-            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-center text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-center text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
           >
             Clear
           </Link>
         </form>
       </section>
 
-      <PageHeader
-        eyebrow="Service"
-        title="Service reports"
-        description="Operational reporting for aging, coverage, throughput, and technician performance."
-        actions={
-          <>
-            <Link
-              href="/service"
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
-            >
-              Back to operations
-            </Link>
-            <Link
-              href={reportQuery ? `/service/reports/print?${reportQuery}` : "/service/reports/print"}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
-            >
-              Printable summary
-            </Link>
-            <SaveServiceReportButton filters={filters} />
-            <Link
-              href={reportQuery ? `/api/service-cases/export?${reportQuery}` : "/api/service-cases/export"}
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-            >
-              Export CSV
-            </Link>
-          </>
-        }
+      <MetricStrip
+        items={[
+          {
+            label: "Report scope",
+            value: reportScopeLabel,
+            detail: "Current technician grouping for this view",
+          },
+          {
+            label: "Date window",
+            value: windowLabel,
+            detail: "Case creation range used in the KPIs",
+            tone: "accent",
+          },
+          {
+            label: "Assignment changes",
+            value: avgAssignmentChangesPerCase.toFixed(1),
+            detail: "Average ownership changes per case",
+          },
+          {
+            label: "Technicians",
+            value: filteredTechnicianCards.length,
+            detail: "KPI groups in current view",
+            tone: "success",
+          },
+        ]}
       />
-
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Report scope
-          </p>
-          <p className="mt-3 text-2xl font-semibold text-slate-950">
-            {reportScopeLabel}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Current technician grouping for this report view.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Date window
-          </p>
-          <p className="mt-3 text-2xl font-semibold text-slate-950">
-            {windowLabel}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Case creation range used for the current KPI grouping.
-          </p>
-        </article>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Assignment coverage
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {assignmentCoverage.toFixed(0)}%
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Active cases currently owned by a technician.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-amber-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-            Critical unassigned
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {criticalUnassignedCases.length}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            High-risk cases still waiting for ownership.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-sky-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
-            Avg active age
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {formatHours(avgActiveAgeHours)}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Mean age of open, planned, and in-progress cases.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            Avg completion time
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {formatHours(avgCompletionHours)}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Mean time from case creation to done state.
-          </p>
-        </article>
-      </section>
 
       {filteredTechnicianCards.length > 0 ? (
         <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">

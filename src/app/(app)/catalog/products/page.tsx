@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
 import { hasCapability } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
+import { MetricStrip } from "@/components/app/metric-strip";
+import { CategoryIndexList } from "@/components/app/category-index-list";
 import { ProductsTable } from "@/components/catalog/products-table";
 
 export const dynamic = "force-dynamic";
@@ -95,12 +97,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       <PageHeader
         eyebrow="Catalog / Products"
         title="Products"
-        description="Products are now a real catalog slice and the first concrete place where registry manufacturers are connected into business data."
+        description="Compact product register tied to manufacturers, categories, and indexed catalog status views."
         actions={
           <>
             <Link
               href="/catalog/products"
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Refresh
             </Link>
@@ -111,14 +113,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   ? { status: normalizedStatus }
                   : {}),
               }).toString()}`}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Export CSV
             </a>
             {canManage ? (
               <Link
                 href="/catalog/products/new"
-                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+                className="rounded-[var(--radius-sm)] bg-[var(--navy)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--navy-mid)]"
               >
                 New product
               </Link>
@@ -127,40 +129,67 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         }
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Total products
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {totalProducts}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            Active
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {activeProducts}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-amber-100 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-            Maintenance
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {maintenanceProducts}
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Inactive
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {inactiveProducts}
-          </p>
-        </article>
-      </section>
+      <MetricStrip
+        items={[
+          {
+            label: "Total products",
+            value: totalProducts,
+            detail: "Catalog product records",
+          },
+          {
+            label: "Active",
+            value: activeProducts,
+            detail: "Ready for operational use",
+            tone: "success",
+          },
+          {
+            label: "Maintenance",
+            value: maintenanceProducts,
+            detail: "Require review or updates",
+            tone: "warning",
+          },
+          {
+            label: "Inactive",
+            value: inactiveProducts,
+            detail: "Hidden from active catalog work",
+          },
+        ]}
+      />
+
+      <CategoryIndexList
+        eyebrow="Products views"
+        title="Working lists"
+        items={[
+          {
+            title: "All products",
+            href: "/catalog/products",
+            description: "Full product register with manufacturer-linked records.",
+            count: totalProducts,
+            meta: "Master list",
+          },
+          {
+            title: "Active products",
+            href: "/catalog/products?status=Active",
+            description: "Available product records used in current operations.",
+            count: activeProducts,
+            meta: "In use",
+          },
+          {
+            title: "Maintenance products",
+            href: "/catalog/products?status=Maintenance",
+            description: "Items that need updates, fixes, or review.",
+            count: maintenanceProducts,
+            meta: "Attention",
+          },
+          {
+            title: "Inactive products",
+            href: "/catalog/products?status=Inactive",
+            description: "Older or retired catalog entries kept for history.",
+            count: inactiveProducts,
+            meta: "Archive",
+          },
+        ]}
+      />
 
       <ProductsTable
         products={products.map((product) => ({

@@ -13,6 +13,14 @@ type CreateHospitalBody = {
   name?: string;
   code?: string | null;
   city?: string | null;
+  country?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  serviceRegion?: string | null;
+  serviceNotes?: string | null;
 };
 
 export async function GET(request: Request) {

@@ -12,12 +12,12 @@ Reference source:
 
 ### Typography
 
-- primary font: `DM Sans`
-- supporting technical font: `DM Mono`
+- primary font direction: compact sans with strong headings
+- supporting technical font direction: mono for counts, IDs, statuses, and operational metadata
 - hierarchy style:
   - strong compact page titles
   - uppercase micro-labels for sections and stats
-  - mono usage for counts, statuses, IDs, and operational metadata
+  - dense, operational text rhythm
 
 ### Color System
 
@@ -53,12 +53,12 @@ Reference palette from the prototype:
 - light gray app background
 - white content surfaces with thin borders
 - compact spacing
-- low-radius corners with occasional slightly larger cards
-- restrained shadows, mostly subtle elevation
+- low-radius corners with restrained shadows
+- operational density over decorative spacing
 
 ### Component Language
 
-- orange is the primary action color for create / launch actions
+- orange is the primary action color for create and start-flow actions
 - navy is the structural color for navigation and emphasis
 - warning states use amber
 - destructive states use red
@@ -73,7 +73,7 @@ Reference palette from the prototype:
 - the most important action is orange
 - secondary reference actions are ghost buttons next to it
 
-Example to preserve:
+Examples to preserve:
 
 - `+ New Service Job`
 - `View Process Flow`
@@ -97,9 +97,9 @@ The prototype is not trying to feel minimal. It is trying to feel operational an
 
 ### Buttons
 
-- `btn-orange`: primary create / launch / start-flow
+- `btn-orange`: primary create or launch action
 - `btn-primary`: dark navy structural action
-- `btn-ghost`: secondary view / filter / back action
+- `btn-ghost`: secondary view, filter, or back action
 - compact small buttons for secondary list-table actions
 
 ### Status Surfaces
@@ -127,10 +127,10 @@ The prototype is not trying to feel minimal. It is trying to feel operational an
 
 ## Design Goals For The Rebuild
 
-1. Move the app closer to the prototype’s navy-orange operational identity.
+1. Move the app closer to the prototype's navy-orange operational identity.
 2. Preserve compact, information-dense layouts instead of oversized modern cards.
 3. Standardize create actions so they sit in the page header and use the orange primary button.
-4. Introduce the prototype’s visual rhythm to Registry first, then spread it to Catalog and Documents.
+4. Introduce the prototype's visual rhythm to Registry first, then spread it to Catalog, Service, and Documents.
 5. Rebuild alert tiles and module tiles with the same placement logic, not only similar colors.
 
 ## Implementation Order
@@ -140,6 +140,7 @@ The prototype is not trying to feel minimal. It is trying to feel operational an
 - extract the prototype color palette into app-wide CSS variables
 - align button variants with prototype hierarchy
 - align page-header action placement
+- restyle the shared shell: topbar, sidebar, page header, stat cards, and border radii
 
 ### Phase 2
 
@@ -165,3 +166,25 @@ Use this visual reference first in:
 4. `Registry / Manufacturers`
 
 These are good first targets because they are data-heavy but lower risk than Service.
+
+## Current Progress
+
+- Registry has the first real prototype-inspired intake interaction pattern
+- the prototype color system is now the target shared visual language
+- shared shell parity is now established as the base GUI pass:
+  - topbar
+  - sidebar
+  - page headers
+  - stat cards
+  - global border and radius treatment
+- compact category and landing layouts are now live across:
+  - Dashboard
+  - Catalog
+  - Registry
+  - Service
+  - Documents
+  - queued placeholder modules
+- the current GUI gap is deeper table and filter parity:
+  - compact filter bars
+  - denser table headers and row rhythm
+  - more square action buttons inside working lists

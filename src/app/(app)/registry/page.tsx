@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
+import { MetricStrip } from "@/components/app/metric-strip";
+import { CategoryIndexList } from "@/components/app/category-index-list";
 
 export const dynamic = "force-dynamic";
 
@@ -50,114 +51,75 @@ export default async function RegistryPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Registry"
-        title="Registry module"
-        description="Registry is now starting to hold real master data. Hospitals are the first normalized entity and will become the reference backbone for systems and future service workflows."
+        title="Registry"
+        description="Compact master-data index for hospitals, companies, and manufacturers."
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Hospitals
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {hospitalCount}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Active master records linked from catalog systems.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Companies
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {companyCount}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Company master records ready for future sales and document flows.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Manufacturers
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {manufacturerCount}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Manufacturer records ready for product and equipment references.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Active systems
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {activeSystemCount}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Systems already attached to a registry hospital.
-          </p>
-        </article>
-        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Equipment
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">
-            {equipmentCount}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Equipment records now linked through manufacturer master data.
-          </p>
-        </article>
-      </section>
+      <MetricStrip
+        items={[
+          { label: "Hospitals", value: hospitalCount, detail: "Facility records" },
+          { label: "Companies", value: companyCount, detail: "Commercial master data" },
+          { label: "Manufacturers", value: manufacturerCount, detail: "Vendor references" },
+          { label: "Linked assets", value: `${activeSystemCount}/${equipmentCount}`, detail: "Systems / equipment", tone: "accent" },
+        ]}
+      />
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <Link
-          href="/registry/hospitals"
-          className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)] transition-transform hover:-translate-y-0.5"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Registry area
-          </p>
-          <h3 className="mt-3 text-2xl font-semibold text-slate-950">
-            Hospitals
-          </h3>
-          <p className="mt-3 text-sm leading-7 text-slate-600">
-            Manage the hospitals used by systems, service visits, and future
-            customer-facing workflows.
-          </p>
-        </Link>
-        <Link
-          href="/registry/companies"
-          className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)] transition-transform hover:-translate-y-0.5"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Registry area
-          </p>
-          <h3 className="mt-3 text-2xl font-semibold text-slate-950">
-            Companies
-          </h3>
-          <p className="mt-3 text-sm leading-7 text-slate-600">
-            Manage company master data for future customer, sales, and
-            document-oriented workflows.
-          </p>
-        </Link>
-        <Link
-          href="/registry/manufacturers"
-          className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)] transition-transform hover:-translate-y-0.5"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Registry area
-          </p>
-          <h3 className="mt-3 text-2xl font-semibold text-slate-950">
-            Manufacturers
-          </h3>
-          <p className="mt-3 text-sm leading-7 text-slate-600">
-            Manage manufacturer master data for future product, equipment, and
-            service reference flows.
-          </p>
-        </Link>
+      <CategoryIndexList
+        eyebrow="Registry index"
+        title="Master data sections"
+        items={[
+          {
+            title: "Hospitals",
+            href: "/registry/hospitals",
+            description:
+              "Manage the hospitals used by systems, service visits, and customer-facing workflows.",
+            count: hospitalCount,
+            meta: "Facility registry",
+          },
+          {
+            title: "Companies",
+            href: "/registry/companies",
+            description:
+              "Manage company master data for customer, sales, and document-linked flows.",
+            count: companyCount,
+            meta: "Commercial registry",
+          },
+          {
+            title: "Manufacturers",
+            href: "/registry/manufacturers",
+            description:
+              "Manage manufacturer data for products, equipment, and service references.",
+            count: manufacturerCount,
+            meta: "Vendor registry",
+          },
+        ]}
+      />
+
+      <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-soft)]">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              Linked references
+            </p>
+            <h3 className="mt-1 text-base font-bold text-[var(--navy)]">
+              Dependency checks
+            </h3>
+          </div>
+        </div>
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          <div className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--text-mid)]">
+            Active systems already tied to registry hospitals:{" "}
+            <span className="font-mono font-semibold text-[var(--navy)]">
+              {activeSystemCount}
+            </span>
+          </div>
+          <div className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--text-mid)]">
+            Equipment records linked through manufacturer references:{" "}
+            <span className="font-mono font-semibold text-[var(--navy)]">
+              {equipmentCount}
+            </span>
+          </div>
+        </div>
       </section>
     </div>
   );

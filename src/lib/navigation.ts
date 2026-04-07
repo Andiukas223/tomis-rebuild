@@ -21,6 +21,7 @@ export const navigationGroups: NavigationGroup[] = [
     href: "/catalog",
     description: "Systems, products, equipment, and category management.",
     children: [
+      { label: "Overview", href: "/catalog" },
       { label: "Systems", href: "/catalog/systems" },
       { label: "Products", href: "/catalog/products" },
       { label: "Equipment", href: "/catalog/equipment" },
@@ -38,6 +39,7 @@ export const navigationGroups: NavigationGroup[] = [
     description: "Service operations, defect flows, contracts, and planning.",
     children: [
       { label: "Operations", href: "/service" },
+      { label: "Task Queue", href: "/service/tasks" },
       { label: "Reports", href: "/service/reports" },
     ],
   },
@@ -55,7 +57,6 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Documents",
     href: "/documents",
     description: "Document records, uploads, and generated outputs.",
-    children: [{ label: "Generated reports", href: "/documents" }],
   },
   {
     label: "Office",
@@ -67,6 +68,7 @@ export const navigationGroups: NavigationGroup[] = [
     href: "/registry",
     description: "Companies, hospitals, manufacturers, and addresses.",
     children: [
+      { label: "Overview", href: "/registry" },
       { label: "Hospitals", href: "/registry/hospitals" },
       { label: "Companies", href: "/registry/companies" },
       { label: "Manufacturers", href: "/registry/manufacturers" },

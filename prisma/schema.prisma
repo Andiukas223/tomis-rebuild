@@ -42,6 +42,7 @@ model User {
   serviceAssignmentEvents ServiceAssignmentEvent[] @relation("ServiceAssignmentChangedBy")
   serviceNotes            ServiceNote[] @relation("ServiceNoteAuthor")
   assignedServiceTasks    ServiceTask[] @relation("ServiceTaskAssignee")
+  changedServiceTaskEvents ServiceTaskEvent[] @relation("ServiceTaskEventChangedBy")
   uploadedServiceAttachments ServiceAttachment[] @relation("ServiceAttachmentUploader")
   sessions             Session[]
 }
@@ -65,8 +66,15 @@ model Company {
   id             String   @id @default(cuid())
   name           String
   code           String?
+  vatCode        String?
   city           String?
   country        String?
+  addressLine1   String?
+  addressLine2   String?
+  website        String?
+  contactName    String?
+  contactEmail   String?
+  contactPhone   String?
   organizationId String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -83,6 +91,10 @@ model Manufacturer {
   code           String?
   country        String?
   website        String?
+  supportEmail   String?
+  supportPhone   String?
+  productFocus   String?
+  serviceNotes   String?
   organizationId String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -145,6 +157,14 @@ model Hospital {
   name           String
   code           String?
   city           String?
+  country        String?
+  addressLine1   String?
+  addressLine2   String?
+  contactName    String?
+  contactEmail   String?
+  contactPhone   String?
+  serviceRegion  String?
+  serviceNotes   String?
   organizationId String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -248,11 +268,39 @@ model ServiceTask {
 
   serviceCase   ServiceCase @relation(fields: [serviceCaseId], references: [id], onDelete: Cascade)
   assignedUser  User?       @relation("ServiceTaskAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  events        ServiceTaskEvent[]
 
   @@index([serviceCaseId])
   @@index([sortOrder])
   @@index([dueAt])
   @@index([assignedUserId])
+}
+
+model ServiceTaskEvent {
+  id                 String   @id @default(cuid())
+  serviceTaskId      String
+  changedById        String?
+  eventType          String
+  previousTitle      String?
+  newTitle           String?
+  previousNotes      String?
+  newNotes           String?
+  previousDueAt      DateTime?
+  newDueAt           DateTime?
+  previousCompleted  Boolean?
+  newCompleted       Boolean?
+  previousAssigneeId String?
+  previousAssigneeName String?
+  newAssigneeId      String?
+  newAssigneeName    String?
+  createdAt          DateTime @default(now())
+
+  serviceTask ServiceTask @relation(fields: [serviceTaskId], references: [id], onDelete: Cascade)
+  changedBy   User?       @relation("ServiceTaskEventChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([serviceTaskId])
+  @@index([changedById])
+  @@index([createdAt])
 }
 
 model ServiceAttachment {

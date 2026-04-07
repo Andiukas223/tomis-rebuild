@@ -18,8 +18,15 @@ type CompanyRouteProps = {
 type UpdateCompanyBody = {
   name?: string;
   code?: string | null;
+  vatCode?: string | null;
   city?: string | null;
   country?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  website?: string | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
 };
 
 export async function GET(_: Request, { params }: CompanyRouteProps) {

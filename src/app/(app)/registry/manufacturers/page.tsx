@@ -86,6 +86,12 @@ export default async function ManufacturersPage({
         actions={
           <>
             <Link
+              href="/registry/manufacturers/new"
+              className="rounded-full border border-[#d6dde8] bg-[#eff5fb] px-4 py-2 text-sm font-medium text-[#0f2742] transition-colors hover:bg-[#e2edf8]"
+            >
+              View process flow
+            </Link>
+            <Link
               href="/catalog/products"
               className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
             >
@@ -94,9 +100,9 @@ export default async function ManufacturersPage({
             {canManage ? (
               <Link
                 href="/registry/manufacturers/new"
-                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+                className="rounded-full bg-[#ff8b2b] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(255,139,43,0.24)] transition-colors hover:bg-[#f27c1c]"
               >
-                New manufacturer
+                + New manufacturer
               </Link>
             ) : null}
           </>

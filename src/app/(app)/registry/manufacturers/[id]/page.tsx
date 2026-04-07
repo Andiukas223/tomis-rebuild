@@ -83,9 +83,9 @@ export default async function ManufacturerDetailPage({
             {canManageRegistry ? (
               <Link
                 href={`/registry/manufacturers/${manufacturer.id}/edit`}
-                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                className="rounded-full border border-[#d6dde8] bg-[#eff5fb] px-4 py-2 text-sm font-medium text-[#0f2742] transition-colors hover:bg-[#e2edf8]"
               >
-                Edit manufacturer
+                Edit manufacturer flow
               </Link>
             ) : null}
             {canManageRegistry ? (
@@ -148,6 +148,14 @@ export default async function ManufacturerDetailPage({
         </article>
         <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Support email
+          </p>
+          <p className="mt-3 text-sm font-medium text-slate-950">
+            {manufacturer.supportEmail ?? "N/A"}
+          </p>
+        </article>
+        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
             Linked products
           </p>
           <p className="mt-3 text-2xl font-semibold text-slate-950">
@@ -162,6 +170,63 @@ export default async function ManufacturerDetailPage({
             {manufacturer._count.equipment}
           </p>
         </article>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                Guided Intake Snapshot
+              </p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-950">
+                Vendor support profile
+              </h3>
+            </div>
+            <span className="rounded-full border border-[#ffe0c2] bg-[#fff5eb] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#9c5b1d]">
+              Prototype parity
+            </span>
+          </div>
+
+          <div className="mt-6 grid gap-5 md:grid-cols-2">
+            <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Support channels
+              </p>
+              <p className="mt-3 text-base font-semibold text-slate-950">
+                {manufacturer.supportEmail ?? "No support email"}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {manufacturer.supportPhone ?? "No support phone recorded."}
+              </p>
+            </div>
+
+            <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Product focus
+              </p>
+              <p className="mt-3 text-base font-semibold text-slate-950">
+                {manufacturer.productFocus ?? "No product focus"}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                This focus is used as a quick support reference across catalog and service work.
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <aside className="rounded-[1.75rem] border border-[#d7e3f0] bg-[#edf4fb] p-6 shadow-[0_18px_45px_rgba(15,39,66,0.08)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#4c6a87]">
+            Service Context
+          </p>
+          <p className="mt-3 text-lg font-semibold text-[#0f2742]">
+            {manufacturer.productFocus ?? "No focus assigned"}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[#38536d]">
+            {manufacturer.serviceNotes ??
+              "No vendor-specific support guidance has been recorded yet."}
+          </p>
+        </aside>
       </section>
 
       <section className="rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.06)]">

@@ -22,7 +22,7 @@ export default async function NewManufacturerPage() {
       <PageHeader
         eyebrow="Registry / Manufacturers"
         title="Create manufacturer"
-        description="This create flow extends the registry master-data pattern to manufacturers and future catalog relationships."
+        description="This guided create flow completes the first Registry-wide intake rollout, capturing manufacturer identity, geography, support channels, and service context before save."
       />
 
       <ManufacturerForm mode="create" />

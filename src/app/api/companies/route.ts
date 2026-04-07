@@ -12,8 +12,15 @@ import {
 type CreateCompanyBody = {
   name?: string;
   code?: string | null;
+  vatCode?: string | null;
   city?: string | null;
   country?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  website?: string | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
 };
 
 export async function GET(request: Request) {

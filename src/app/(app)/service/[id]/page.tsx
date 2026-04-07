@@ -119,6 +119,13 @@ export default async function ServiceCaseDetailPage({
         orderBy: [{ sortOrder: "asc" }],
         include: {
           assignedUser: true,
+          events: {
+            orderBy: [{ createdAt: "desc" }],
+            take: 3,
+            include: {
+              changedBy: true,
+            },
+          },
         },
       },
     },
@@ -450,13 +457,23 @@ export default async function ServiceCaseDetailPage({
                     title: task.title,
                     notes: task.notes ?? "",
                     isCompleted: task.isCompleted,
-                    dueAt: task.dueAt?.toISOString() ?? "",
-                    assignedUserId: task.assignedUserId ?? "",
-                    assignedUserName: task.assignedUser?.fullName ?? null,
-                    completedAtLabel: task.completedAt?.toLocaleString() ?? null,
-                  }}
-                />
-              ))
+                  dueAt: task.dueAt?.toISOString() ?? "",
+                  assignedUserId: task.assignedUserId ?? "",
+                  assignedUserName: task.assignedUser?.fullName ?? null,
+                  completedAtLabel: task.completedAt?.toLocaleString() ?? null,
+                  events: task.events.map((event) => ({
+                    id: event.id,
+                    eventType: event.eventType,
+                    createdAtLabel: event.createdAt.toLocaleString(),
+                    changedByName: event.changedBy?.fullName ?? null,
+                    previousAssigneeName: event.previousAssigneeName ?? null,
+                    newAssigneeName: event.newAssigneeName ?? null,
+                    previousCompleted: event.previousCompleted ?? null,
+                    newCompleted: event.newCompleted ?? null,
+                  })),
+                }}
+              />
+            ))
             )}
           </div>
         </article>

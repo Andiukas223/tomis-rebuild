@@ -8,22 +8,34 @@ export function AppTopbar() {
   const router = useRouter();
   const { logout, user } = useAuth();
 
+  const initials = (user?.name ?? "Guest")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
-    <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur">
-      <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-            Tomis rebuild
-          </p>
-          <h1 className="mt-1 text-xl font-semibold text-slate-950">
-            Protected application shell
-          </h1>
+    <header className="border-b border-white/8 bg-[var(--navy)] text-white">
+      <div className="flex min-h-[50px] flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+        <div className="flex items-center gap-4">
+          <div>
+            <p className="text-[18px] font-bold tracking-[-0.03em] text-white">
+              tradintek
+            </p>
+          </div>
+          <div className="hidden h-5 w-px bg-white/15 lg:block" />
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--steel-light)]">
+              Service IS
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/catalog/systems"
-            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            className="rounded-[var(--radius-sm)] border border-white/14 bg-white/8 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/12"
           >
             Systems module
           </Link>
@@ -33,12 +45,17 @@ export function AppTopbar() {
               await logout();
               router.push("/login");
             }}
-            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            className="rounded-[var(--radius-sm)] border border-white/14 bg-transparent px-3 py-1.5 text-xs font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-white"
           >
             Sign out
           </button>
-          <div className="rounded-full bg-slate-950 px-4 py-2 text-sm text-white">
-            {user?.name ?? "Guest"} · {user?.role ?? "No role"}
+          <div className="flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-1">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--orange)] text-[11px] font-bold text-white">
+              {initials}
+            </div>
+            <div className="text-xs font-medium text-white/85">
+              {user?.name ?? "Guest"} | {user?.role ?? "No role"}
+            </div>
           </div>
         </div>
       </div>

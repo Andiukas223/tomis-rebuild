@@ -51,7 +51,7 @@ export default async function EditHospitalPage({
       <PageHeader
         eyebrow="Registry / Hospitals"
         title={`Edit ${hospital.name}`}
-        description="This edit screen extends the registry master-data pattern and keeps hospital records maintainable over time."
+        description="This edit flow uses the same Guided Intake structure as hospital creation so registry records stay complete and consistent over time."
       />
 
       <HospitalForm
@@ -61,6 +61,14 @@ export default async function EditHospitalPage({
           name: hospital.name,
           code: hospital.code ?? "",
           city: hospital.city ?? "",
+          country: hospital.country ?? "",
+          addressLine1: hospital.addressLine1 ?? "",
+          addressLine2: hospital.addressLine2 ?? "",
+          contactName: hospital.contactName ?? "",
+          contactEmail: hospital.contactEmail ?? "",
+          contactPhone: hospital.contactPhone ?? "",
+          serviceRegion: hospital.serviceRegion ?? "",
+          serviceNotes: hospital.serviceNotes ?? "",
         }}
       />
     </div>

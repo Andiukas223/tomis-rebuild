@@ -22,7 +22,7 @@ export default async function NewCompanyPage() {
       <PageHeader
         eyebrow="Registry / Companies"
         title="Create company"
-        description="This create flow extends the registry master-data pattern to companies and future commercial workflows."
+        description="This guided create flow extends the prototype intake pattern into company records, capturing identity, commercial details, address, and contacts before save."
       />
 
       <CompanyForm mode="create" />

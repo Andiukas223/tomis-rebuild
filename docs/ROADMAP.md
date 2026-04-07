@@ -3,7 +3,7 @@
 ## Priority Order
 
 1. service workflow refinement
-2. visual parity and guided intake flow rollout
+2. compact GUI parity inside list and table surfaces
 3. bug fixing and UX consistency pass
 4. tasks module
 5. warehouse foundation
@@ -25,7 +25,7 @@ Goal:
 Tasks:
 - refine technician execution flow
 - improve checklist and task execution UX
-- add task-level history, ownership clarity, and stronger overdue visibility
+- expand task-level history, ownership clarity, and stronger overdue visibility
 - improve dispatch and planning board behavior
 - extend follow-up and completion workflows
 
@@ -34,12 +34,16 @@ Tasks:
 Goal:
 - capture the Tradintek prototype visual language and reuse its strongest input-flow pattern in the rebuild
 
+Status:
+- Registry rollout complete
+- shared shell and compact page-level parity in progress
+
 Tasks:
-- align the rebuild color system, button hierarchy, and page-header actions with the prototype
-- restyle Registry pages around the prototype’s dense operational UI language
-- introduce the shared `Guided Intake Flow` pattern
-- implement the first `Guided Intake Flow` in `Registry / Hospitals`
-- roll the same flow pattern into other Registry forms after validation
+- align the rebuild color system, button hierarchy, and page-header actions with the prototype outside Registry
+- restyle the shared shell to match the prototype's topbar, sidebar, border, and card density
+- restyle Service, Documents, Catalog, and queued modules around the prototype's dense operational UI language
+- compact table and filter surfaces so the inner working areas match the new square, list-first page shells
+- reuse the shared `Guided Intake Flow` pattern for future heavy-input workflows
 
 ### Milestone 3: Stabilization Pass
 

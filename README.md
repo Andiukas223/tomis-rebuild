@@ -21,6 +21,8 @@ The rebuild now includes:
 - Dockerized web + PostgreSQL setup
 - protected shell with sidebar, topbar, dashboard, and module routing
 - registry master data for hospitals, companies, and manufacturers
+- guided registry intake rollout for hospitals, companies, and manufacturers
+- compact metric-strip and indexed category layouts across dashboard, catalog, registry, service, documents, and queued module pages
 - catalog modules for systems, products, and equipment
 - service operations with assignment, execution-focused task handling, attachments, notes, completion records, dispatch actions, reporting, and printable summaries
 - generated document records for saved service report snapshots
@@ -135,6 +137,7 @@ The current Prisma schema includes:
 Key relationships:
 
 - `System` references `Hospital`
+- `Hospital` now stores address, contact, and service-context details for guided registry entry
 - `Product` references `Manufacturer`
 - `Equipment` references `Manufacturer` and can link to `System`
 - `ServiceCase` references `System`, optional `Equipment`, and optional assigned `User`
@@ -220,10 +223,10 @@ docker compose up -d db
 Recommended next implementation slices:
 
 1. service workflow refinement and technician execution quality
-2. bug fixing and UX consistency across current modules
-3. tasks module
-4. warehouse foundation
-5. documents expansion
+2. compact GUI parity inside list and table surfaces
+3. bug fixing and UX consistency across current modules
+4. tasks module
+5. warehouse foundation
 
 ## Notes
 
@@ -233,4 +236,5 @@ Recommended next implementation slices:
 - linked registry records are protected from destructive actions when in active use
 - service reporting now supports technician, status, and date-range filtered review plus matching CSV export
 - printable service summaries can now be saved into `Documents` as stored report records
+- queued module pages now use module-specific compact placeholder layouts instead of generic empty states
 - the next planning checkpoint now lives in `docs/ROADMAP.md`
