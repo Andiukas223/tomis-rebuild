@@ -15,6 +15,7 @@ type UpdateSystemBody = {
   serialNumber?: string | null;
   hospitalId?: string;
   status?: string;
+  equipmentIds?: string[];
 };
 
 export async function GET(_: Request, { params }: SystemRouteProps) {
@@ -33,6 +34,11 @@ export async function GET(_: Request, { params }: SystemRouteProps) {
     },
     include: {
       hospital: true,
+      equipment: {
+        include: {
+          manufacturer: true,
+        },
+      },
     },
   });
 
@@ -103,11 +109,55 @@ export async function PATCH(request: Request, { params }: SystemRouteProps) {
 
   const system = await db.system.update({
     where: { id },
-    data: input,
+    data: {
+      code: input.code,
+      name: input.name,
+      serialNumber: input.serialNumber,
+      hospitalId: input.hospitalId,
+      status: input.status,
+    },
     include: {
       hospital: true,
     },
   });
+
+  const selectedEquipment = await db.equipment.findMany({
+    where: {
+      id: { in: input.equipmentIds },
+      organizationId: user.organizationId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (selectedEquipment.length !== input.equipmentIds.length) {
+    return NextResponse.json(
+      { message: "One or more selected equipment records were not found." },
+      { status: 400 },
+    );
+  }
+
+  await db.equipment.updateMany({
+    where: {
+      systemId: id,
+      id: { notIn: input.equipmentIds.length ? input.equipmentIds : undefined },
+    },
+    data: {
+      systemId: null,
+    },
+  });
+
+  if (input.equipmentIds.length > 0) {
+    await db.equipment.updateMany({
+      where: {
+        id: { in: input.equipmentIds },
+      },
+      data: {
+        systemId: id,
+      },
+    });
+  }
 
   return NextResponse.json({ system }, { status: 200 });
 }

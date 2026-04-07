@@ -30,11 +30,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (hasSessionCookie && pathname === "/login") {
-    const nextPath = request.nextUrl.searchParams.get("next") || "/dashboard";
-    return NextResponse.redirect(new URL(nextPath, request.url));
-  }
-
   return NextResponse.next();
 }
 

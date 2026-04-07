@@ -8,6 +8,7 @@ export type SystemsTableItem = {
   serialNumber: string | null;
   hospitalName: string;
   status: string;
+  equipmentCount: number;
 };
 
 type SystemsTableProps = {
@@ -48,7 +49,7 @@ export function SystemsTable({ systems, filters }: SystemsTableProps) {
           aria-label="Search systems"
           name="q"
           defaultValue={filters.q}
-          placeholder="Search by code, name, serial number, or hospital..."
+          placeholder="Search by code, name, serial number, hospital, or equipment..."
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none ring-0 transition focus:border-sky-400 focus:bg-white"
         />
         <select
@@ -95,6 +96,7 @@ export function SystemsTable({ systems, filters }: SystemsTableProps) {
                 <th className="px-6 py-4 font-semibold">System</th>
                 <th className="px-6 py-4 font-semibold">Serial number</th>
                 <th className="px-6 py-4 font-semibold">Hospital</th>
+                <th className="px-6 py-4 font-semibold">Equipment</th>
                 <th className="px-6 py-4 font-semibold">Status</th>
                 <th className="px-6 py-4 font-semibold">Actions</th>
               </tr>
@@ -113,6 +115,7 @@ export function SystemsTable({ systems, filters }: SystemsTableProps) {
                   </td>
                   <td className="px-6 py-4">{system.serialNumber ?? "N/A"}</td>
                   <td className="px-6 py-4">{system.hospitalName}</td>
+                  <td className="px-6 py-4">{system.equipmentCount}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${

@@ -1,7 +1,7 @@
 # Tomis Rebuild App
 
-This repository is the active rebuild workspace for the Tomis business platform.  
-The goal is to replace the current app with a cleaner, safer, and more maintainable system while preserving the core business workflows.
+This repository is the active rebuild workspace for the Tomis business platform.
+The goal is to replace the current app with a cleaner, safer, and more maintainable system while preserving the core operational workflows.
 
 ## Current Stack
 
@@ -20,10 +20,10 @@ The rebuild now includes:
 - HTTP-only cookie auth with database-backed sessions
 - Dockerized web + PostgreSQL setup
 - protected shell with sidebar, topbar, dashboard, and module routing
-- real `catalog/systems` CRUD
-- real `registry/hospitals` CRUD
-- normalized relation from systems to hospitals
-- search, status filtering, and CSV export for systems
+- registry master data for hospitals, companies, and manufacturers
+- catalog modules for systems, products, and equipment
+- service operations with assignment, task checklists, attachments, and notes
+- organization-scoped APIs and server-rendered detail pages
 
 Planning and reverse-engineering notes live one level above this app in the parent workspace documentation.
 
@@ -45,9 +45,23 @@ Planning and reverse-engineering notes live one level above this app in the pare
 - `/catalog/systems/new`
 - `/catalog/systems/[id]`
 - `/catalog/systems/[id]/edit`
+- `/catalog/products`
+- `/catalog/products/new`
+- `/catalog/products/[id]`
+- `/catalog/products/[id]/edit`
+- `/catalog/equipment`
+- `/catalog/equipment/new`
+- `/catalog/equipment/[id]`
+- `/catalog/equipment/[id]/edit`
 - `/api/systems`
 - `/api/systems/[id]`
 - `/api/systems/export`
+- `/api/products`
+- `/api/products/[id]`
+- `/api/products/export`
+- `/api/equipment`
+- `/api/equipment/[id]`
+- `/api/equipment/export`
 
 ### Registry
 
@@ -56,8 +70,35 @@ Planning and reverse-engineering notes live one level above this app in the pare
 - `/registry/hospitals/new`
 - `/registry/hospitals/[id]`
 - `/registry/hospitals/[id]/edit`
+- `/registry/companies`
+- `/registry/companies/new`
+- `/registry/companies/[id]`
+- `/registry/companies/[id]/edit`
+- `/registry/manufacturers`
+- `/registry/manufacturers/new`
+- `/registry/manufacturers/[id]`
+- `/registry/manufacturers/[id]/edit`
 - `/api/hospitals`
 - `/api/hospitals/[id]`
+- `/api/companies`
+- `/api/companies/[id]`
+- `/api/manufacturers`
+- `/api/manufacturers/[id]`
+
+### Service
+
+- `/service`
+- `/service/new`
+- `/service/[id]`
+- `/service/[id]/edit`
+- `/api/service-cases`
+- `/api/service-cases/[id]`
+- `/api/service-cases/[id]/status`
+- `/api/service-cases/[id]/attachments`
+- `/api/service-cases/[id]/attachments/[attachmentId]`
+- `/api/service-cases/[id]/notes`
+- `/api/service-cases/export`
+- `/api/service-tasks/[id]`
 
 ## Data Model
 
@@ -67,9 +108,23 @@ The current Prisma schema includes:
 - `User`
 - `Session`
 - `Hospital`
+- `Company`
+- `Manufacturer`
 - `System`
+- `Product`
+- `Equipment`
+- `ServiceCase`
+- `ServiceTask`
+- `ServiceAttachment`
+- `ServiceNote`
 
-`System` now references `Hospital` through `hospitalId` instead of storing a free-text hospital name.
+Key relationships:
+
+- `System` references `Hospital`
+- `Product` references `Manufacturer`
+- `Equipment` references `Manufacturer` and can link to `System`
+- `ServiceCase` references `System`, optional `Equipment`, and optional assigned `User`
+- `ServiceTask`, `ServiceAttachment`, and `ServiceNote` all belong to `ServiceCase`
 
 ## Local Setup
 
@@ -84,7 +139,7 @@ Run locally:
 ```bash
 npm install
 npm run prisma:generate
-npm run prisma:deploy
+npx prisma migrate deploy
 npm run prisma:seed
 npm run dev
 ```
@@ -105,6 +160,8 @@ Services:
 - postgres database: `tomis_rebuild`
 - postgres user: `tomis`
 
+Uploaded service attachments are stored in `storage/service-attachments` and mounted into the container.
+
 You can also use the Windows control menu:
 
 ```bat
@@ -117,6 +174,11 @@ Default seeded admin account:
 
 - username: `anlo`
 - password: `dev-admin-pass`
+
+Additional seeded service users:
+
+- `marius`
+- `ievag`
 
 Override the seed password with `SEED_ADMIN_PASSWORD` if needed.
 
@@ -131,20 +193,23 @@ npm run prisma:deploy
 npm run prisma:migrate
 npm run prisma:seed
 npm run prisma:studio
+docker compose up -d --build web
+docker compose up -d db
 ```
 
 ## Current Priorities
 
 Recommended next implementation slices:
 
-1. registry companies
-2. stronger role and permission enforcement
-3. more normalized catalog entities
-4. tasks and service workflows
-5. test coverage for critical CRUD and auth flows
+1. service note editing, deletion, and cleaner activity timeline rules
+2. technician workload planning on dashboard and service list
+3. deeper operational workflows around service scheduling and execution
+4. stronger role and permission enforcement
+5. test coverage for auth and critical CRUD flows
 
 ## Notes
 
 - `.playwright-cli`, `.next`, and `node_modules` are generated artifacts and should not be committed
 - `.env.example` is safe to commit; real `.env` values should stay local
-- linked hospitals cannot be deleted until dependent systems are reassigned or removed
+- service attachments persist under `storage/service-attachments`
+- linked registry records are protected from destructive actions when in active use

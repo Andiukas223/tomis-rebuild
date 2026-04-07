@@ -9,6 +9,7 @@ export type SystemFormValues = {
   serialNumber: string;
   hospitalId: string;
   status: string;
+  equipmentIds: string[];
 };
 
 type HospitalOption = {
@@ -17,10 +18,18 @@ type HospitalOption = {
   city: string | null;
 };
 
+type EquipmentOption = {
+  id: string;
+  code: string;
+  name: string;
+  model: string | null;
+};
+
 type SystemFormProps = {
   mode: "create" | "edit";
   systemId?: string;
   hospitals: HospitalOption[];
+  equipmentOptions: EquipmentOption[];
   initialValues?: SystemFormValues;
 };
 
@@ -30,12 +39,14 @@ const defaultValues: SystemFormValues = {
   serialNumber: "",
   hospitalId: "",
   status: "Active",
+  equipmentIds: [],
 };
 
 export function SystemForm({
   mode,
   systemId,
   hospitals,
+  equipmentOptions,
   initialValues = defaultValues,
 }: SystemFormProps) {
   const router = useRouter();
@@ -157,6 +168,57 @@ export function SystemForm({
             ))}
           </select>
         </label>
+
+        <div className="space-y-3 md:col-span-2">
+          <span className="text-sm font-medium text-slate-700">
+            Linked equipment
+          </span>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            {equipmentOptions.length === 0 ? (
+              <p className="text-sm text-slate-600">
+                No equipment is available yet. Create equipment records first to
+                attach them to this system.
+              </p>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {equipmentOptions.map((equipment) => {
+                  const checked = values.equipmentIds.includes(equipment.id);
+
+                  return (
+                    <label
+                      key={equipment.id}
+                      className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(event) =>
+                          setValues((current) => ({
+                            ...current,
+                            equipmentIds: event.target.checked
+                              ? [...current.equipmentIds, equipment.id]
+                              : current.equipmentIds.filter(
+                                  (id) => id !== equipment.id,
+                                ),
+                          }))
+                        }
+                        className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                      />
+                      <span>
+                        <span className="block font-medium text-slate-950">
+                          {equipment.code} {equipment.name}
+                        </span>
+                        <span className="block text-xs text-slate-500">
+                          {equipment.model ?? "Model not set"}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {error ? (

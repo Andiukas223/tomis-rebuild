@@ -9,6 +9,7 @@ type CreateSystemBody = {
   serialNumber?: string | null;
   hospitalId?: string;
   status?: string;
+  equipmentIds?: string[];
 };
 
 export async function GET(request: Request) {
@@ -90,13 +91,49 @@ export async function POST(request: Request) {
 
   const system = await db.system.create({
     data: {
-      ...input,
+      code: input.code,
+      name: input.name,
+      serialNumber: input.serialNumber,
+      hospitalId: input.hospitalId,
+      status: input.status,
       organizationId: user.organizationId,
     },
     include: {
       hospital: true,
     },
   });
+
+  if (input.equipmentIds.length > 0) {
+    const equipment = await db.equipment.findMany({
+      where: {
+        id: { in: input.equipmentIds },
+        organizationId: user.organizationId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (equipment.length !== input.equipmentIds.length) {
+      await db.system.delete({
+        where: { id: system.id },
+      });
+
+      return NextResponse.json(
+        { message: "One or more selected equipment records were not found." },
+        { status: 400 },
+      );
+    }
+
+    await db.equipment.updateMany({
+      where: {
+        id: { in: input.equipmentIds },
+      },
+      data: {
+        systemId: system.id,
+      },
+    });
+  }
 
   return NextResponse.json({ system }, { status: 201 });
 }

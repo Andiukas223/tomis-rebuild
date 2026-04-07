@@ -22,6 +22,22 @@ export default async function NewSystemPage() {
       })
     : [];
 
+  const equipmentOptions = user
+    ? await db.equipment.findMany({
+        where: {
+          organizationId: user.organizationId,
+          OR: [{ systemId: null }],
+        },
+        orderBy: [{ code: "asc" }],
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          model: true,
+        },
+      })
+    : [];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -30,7 +46,11 @@ export default async function NewSystemPage() {
         description="This is the first create flow in the rebuild. It establishes the form pattern that future modules can reuse."
       />
 
-      <SystemForm mode="create" hospitals={hospitals} />
+      <SystemForm
+        mode="create"
+        hospitals={hospitals}
+        equipmentOptions={equipmentOptions}
+      />
     </div>
   );
 }

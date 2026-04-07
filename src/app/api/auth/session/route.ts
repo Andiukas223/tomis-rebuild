@@ -9,7 +9,7 @@ export async function GET() {
   const token = decodeSessionToken(cookieStore.get(SESSION_COOKIE_NAME)?.value);
 
   if (!token) {
-    return NextResponse.json({ user: null }, { status: 401 });
+    return NextResponse.json({ user: null }, { status: 200 });
   }
 
   const session = await db.session.findFirst({
@@ -30,7 +30,7 @@ export async function GET() {
   });
 
   if (!session || !session.user.isActive) {
-    return NextResponse.json({ user: null }, { status: 401 });
+    return NextResponse.json({ user: null }, { status: 200 });
   }
 
   return NextResponse.json(

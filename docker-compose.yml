@@ -15,6 +15,9 @@ services:
       DATABASE_URL: postgresql://tomis:tomis_dev_password@db:5432/tomis_rebuild?schema=public
       SESSION_SECRET: change-me-before-production
       COOKIE_SECURE: "false"
+      SERVICE_ATTACHMENTS_DIR: /app/storage/service-attachments
+    volumes:
+      - ./storage:/app/storage
 
   db:
     image: postgres:17-alpine

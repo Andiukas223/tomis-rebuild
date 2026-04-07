@@ -13,9 +13,14 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users     User[]
-  hospitals Hospital[]
-  systems   System[]
+  companies     Company[]
+  equipment     Equipment[]
+  manufacturers Manufacturer[]
+  products      Product[]
+  users         User[]
+  hospitals     Hospital[]
+  serviceCases  ServiceCase[]
+  systems       System[]
 }
 
 model User {
@@ -31,7 +36,10 @@ model User {
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  sessions     Session[]
+  assignedServiceCases ServiceCase[] @relation("ServiceCaseAssignee")
+  serviceNotes            ServiceNote[] @relation("ServiceNoteAuthor")
+  uploadedServiceAttachments ServiceAttachment[] @relation("ServiceAttachmentUploader")
+  sessions             Session[]
 }
 
 model Session {
@@ -47,6 +55,85 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model Company {
+  id             String   @id @default(cuid())
+  name           String
+  code           String?
+  city           String?
+  country        String?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model Manufacturer {
+  id             String   @id @default(cuid())
+  name           String
+  code           String?
+  country        String?
+  website        String?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  equipment    Equipment[]
+  products     Product[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model Equipment {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  name           String
+  model          String?
+  serialNumber   String?
+  category       String?
+  status         String
+  manufacturerId String
+  organizationId String
+  systemId       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  manufacturer Manufacturer @relation(fields: [manufacturerId], references: [id], onDelete: Restrict)
+  serviceCases ServiceCase[]
+  system       System?      @relation(fields: [systemId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([manufacturerId])
+  @@index([systemId])
+  @@index([status])
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  name           String
+  sku            String?
+  category       String?
+  status         String
+  manufacturerId String
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  manufacturer Manufacturer @relation(fields: [manufacturerId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([manufacturerId])
+  @@index([status])
 }
 
 model Hospital {
@@ -78,8 +165,93 @@ model System {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   hospital     Hospital     @relation(fields: [hospitalId], references: [id], onDelete: Restrict)
+  equipment    Equipment[]
+  serviceCases ServiceCase[]
 
   @@index([organizationId])
   @@index([hospitalId])
   @@index([status])
+}
+
+model ServiceCase {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  title          String
+  summary        String?
+  status         String
+  priority       String
+  scheduledAt    DateTime?
+  completedAt    DateTime?
+  systemId       String
+  equipmentId    String?
+  assignedUserId String?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  system       System         @relation(fields: [systemId], references: [id], onDelete: Restrict)
+  equipment    Equipment?     @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  assignedUser User?          @relation("ServiceCaseAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  attachments  ServiceAttachment[]
+  notes        ServiceNote[]
+  tasks        ServiceTask[]
+
+  @@index([organizationId])
+  @@index([systemId])
+  @@index([equipmentId])
+  @@index([assignedUserId])
+  @@index([status])
+  @@index([priority])
+  @@index([scheduledAt])
+}
+
+model ServiceTask {
+  id            String   @id @default(cuid())
+  title         String
+  isCompleted   Boolean  @default(false)
+  completedAt   DateTime?
+  sortOrder     Int      @default(0)
+  serviceCaseId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  serviceCase ServiceCase @relation(fields: [serviceCaseId], references: [id], onDelete: Cascade)
+
+  @@index([serviceCaseId])
+  @@index([sortOrder])
+}
+
+model ServiceAttachment {
+  id            String   @id @default(cuid())
+  fileName      String
+  storageKey    String   @unique
+  contentType   String
+  sizeBytes     Int
+  serviceCaseId String
+  uploadedById  String?
+  createdAt     DateTime @default(now())
+
+  serviceCase ServiceCase @relation(fields: [serviceCaseId], references: [id], onDelete: Cascade)
+  uploadedBy  User?       @relation("ServiceAttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([serviceCaseId])
+  @@index([uploadedById])
+  @@index([createdAt])
+}
+
+model ServiceNote {
+  id            String   @id @default(cuid())
+  body          String
+  serviceCaseId String
+  authorId      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  serviceCase ServiceCase @relation(fields: [serviceCaseId], references: [id], onDelete: Cascade)
+  author      User?       @relation("ServiceNoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([serviceCaseId])
+  @@index([authorId])
+  @@index([createdAt])
 }

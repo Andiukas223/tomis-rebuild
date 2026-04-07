@@ -46,6 +46,16 @@ export default async function SystemsPage({ searchParams }: SystemsPageProps) {
                 },
               },
               { hospital: { name: { contains: normalizedQuery, mode: "insensitive" } } },
+              {
+                equipment: {
+                  some: {
+                    OR: [
+                      { code: { contains: normalizedQuery, mode: "insensitive" } },
+                      { name: { contains: normalizedQuery, mode: "insensitive" } },
+                    ],
+                  },
+                },
+              },
             ],
           }
         : {}),
@@ -60,6 +70,11 @@ export default async function SystemsPage({ searchParams }: SystemsPageProps) {
       hospital: {
         select: {
           name: true,
+        },
+      },
+      _count: {
+        select: {
+          equipment: true,
         },
       },
     },
@@ -153,6 +168,7 @@ export default async function SystemsPage({ searchParams }: SystemsPageProps) {
         systems={systems.map((system) => ({
           ...system,
           hospitalName: system.hospital.name,
+          equipmentCount: system._count.equipment,
         }))}
         filters={{
           q: normalizedQuery,

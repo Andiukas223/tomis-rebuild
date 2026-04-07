@@ -1,0 +1,2 @@
+-- Manufacturer table creation was moved into the earlier equipment migration
+-- so clean replay order works in Prisma shadow databases.

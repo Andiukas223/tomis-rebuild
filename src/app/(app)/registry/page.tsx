@@ -8,9 +8,26 @@ export const dynamic = "force-dynamic";
 export default async function RegistryPage() {
   const user = await getServerSessionUser();
 
-  const [hospitalCount, activeSystemCount] = user
+  const [
+    hospitalCount,
+    companyCount,
+    manufacturerCount,
+    activeSystemCount,
+    equipmentCount,
+  ] =
+    user
     ? await Promise.all([
         db.hospital.count({
+          where: {
+            organizationId: user.organizationId,
+          },
+        }),
+        db.company.count({
+          where: {
+            organizationId: user.organizationId,
+          },
+        }),
+        db.manufacturer.count({
           where: {
             organizationId: user.organizationId,
           },
@@ -21,8 +38,13 @@ export default async function RegistryPage() {
             status: "Active",
           },
         }),
+        db.equipment.count({
+          where: {
+            organizationId: user.organizationId,
+          },
+        }),
       ])
-    : [0, 0];
+    : [0, 0, 0, 0, 0];
 
   return (
     <div className="space-y-6">
@@ -32,7 +54,7 @@ export default async function RegistryPage() {
         description="Registry is now starting to hold real master data. Hospitals are the first normalized entity and will become the reference backbone for systems and future service workflows."
       />
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
             Hospitals
@@ -42,6 +64,28 @@ export default async function RegistryPage() {
           </p>
           <p className="mt-2 text-sm text-slate-600">
             Active master records linked from catalog systems.
+          </p>
+        </article>
+        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Companies
+          </p>
+          <p className="mt-3 text-3xl font-semibold text-slate-950">
+            {companyCount}
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            Company master records ready for future sales and document flows.
+          </p>
+        </article>
+        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Manufacturers
+          </p>
+          <p className="mt-3 text-3xl font-semibold text-slate-950">
+            {manufacturerCount}
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            Manufacturer records ready for product and equipment references.
           </p>
         </article>
         <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
@@ -57,18 +101,18 @@ export default async function RegistryPage() {
         </article>
         <article className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Next registry slices
+            Equipment
           </p>
-          <p className="mt-3 text-lg font-semibold text-slate-950">
-            Companies and manufacturers
+          <p className="mt-3 text-3xl font-semibold text-slate-950">
+            {equipmentCount}
           </p>
           <p className="mt-2 text-sm text-slate-600">
-            These will follow the same master-data pattern.
+            Equipment records now linked through manufacturer master data.
           </p>
         </article>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
+      <section className="grid gap-4 md:grid-cols-3">
         <Link
           href="/registry/hospitals"
           className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)] transition-transform hover:-translate-y-0.5"
@@ -84,18 +128,36 @@ export default async function RegistryPage() {
             customer-facing workflows.
           </p>
         </Link>
-        <article className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white/70 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+        <Link
+          href="/registry/companies"
+          className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)] transition-transform hover:-translate-y-0.5"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Queued
+            Registry area
           </p>
           <h3 className="mt-3 text-2xl font-semibold text-slate-950">
-            Additional registry entities
+            Companies
           </h3>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            Companies, contacts, manufacturers, and addresses can now follow
-            the same normalized master-data approach.
+            Manage company master data for future customer, sales, and
+            document-oriented workflows.
           </p>
-        </article>
+        </Link>
+        <Link
+          href="/registry/manufacturers"
+          className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)] transition-transform hover:-translate-y-0.5"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Registry area
+          </p>
+          <h3 className="mt-3 text-2xl font-semibold text-slate-950">
+            Manufacturers
+          </h3>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            Manage manufacturer master data for future product, equipment, and
+            service reference flows.
+          </p>
+        </Link>
       </section>
     </div>
   );

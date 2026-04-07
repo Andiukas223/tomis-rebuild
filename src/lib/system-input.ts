@@ -4,6 +4,7 @@ export type SystemInput = {
   serialNumber: string | null;
   hospitalId: string;
   status: string;
+  equipmentIds: string[];
 };
 
 export function normalizeSystemInput(input: {
@@ -12,6 +13,7 @@ export function normalizeSystemInput(input: {
   serialNumber?: string | null;
   hospitalId?: string;
   status?: string;
+  equipmentIds?: string[];
 }): SystemInput {
   return {
     code: input.code?.trim().toUpperCase() ?? "",
@@ -19,6 +21,9 @@ export function normalizeSystemInput(input: {
     serialNumber: input.serialNumber?.trim() || null,
     hospitalId: input.hospitalId?.trim() ?? "",
     status: input.status?.trim() || "Active",
+    equipmentIds: Array.isArray(input.equipmentIds)
+      ? input.equipmentIds.map((id) => id.trim()).filter(Boolean)
+      : [],
   };
 }
 

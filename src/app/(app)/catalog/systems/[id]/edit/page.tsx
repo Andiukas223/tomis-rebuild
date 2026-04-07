@@ -30,6 +30,11 @@ export default async function EditSystemPage({
     },
     include: {
       hospital: true,
+      equipment: {
+        select: {
+          id: true,
+        },
+      },
     },
   });
 
@@ -46,6 +51,20 @@ export default async function EditSystemPage({
       id: true,
       name: true,
       city: true,
+    },
+  });
+
+  const equipmentOptions = await db.equipment.findMany({
+    where: {
+      organizationId: user.organizationId,
+      OR: [{ systemId: null }, { systemId: system.id }],
+    },
+    orderBy: [{ code: "asc" }],
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      model: true,
     },
   });
 
@@ -67,7 +86,9 @@ export default async function EditSystemPage({
           serialNumber: system.serialNumber ?? "",
           hospitalId: system.hospitalId,
           status: system.status,
+          equipmentIds: system.equipment.map((equipment) => equipment.id),
         }}
+        equipmentOptions={equipmentOptions}
       />
     </div>
   );

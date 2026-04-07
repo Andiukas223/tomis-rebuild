@@ -1,0 +1,2 @@
+-- Service case creation was moved to a later migration so replay order works
+-- in clean Prisma shadow databases.

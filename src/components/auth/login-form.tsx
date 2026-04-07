@@ -55,6 +55,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
         <input
           value={username}
           onChange={(event) => setUsername(event.target.value)}
+          autoComplete="username"
           className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
           placeholder="Enter your username or email"
         />
@@ -67,6 +68,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
+          autoComplete="current-password"
           className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
           placeholder="Enter your password"
         />

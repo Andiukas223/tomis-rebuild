@@ -1,5 +1,17 @@
-import { db } from "../src/lib/db";
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
 import { hashPassword } from "../src/lib/password";
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not configured.");
+}
+
+const db = new PrismaClient({
+  adapter: new PrismaPg({ connectionString }),
+});
 
 async function main() {
   const organization = await db.organization.upsert({
@@ -36,6 +48,234 @@ async function main() {
       passwordHash: hashPassword(adminPassword),
     },
   });
+
+  const serviceUsers = [
+    {
+      username: "marius",
+      email: "marius@tradintek.local",
+      fullName: "Marius Petrauskas",
+      role: "Field Engineer",
+    },
+    {
+      username: "ievag",
+      email: "ieva@tradintek.local",
+      fullName: "Ieva Grigaite",
+      role: "Service Coordinator",
+    },
+  ];
+
+  for (const serviceUser of serviceUsers) {
+    await db.user.upsert({
+      where: { username: serviceUser.username },
+      update: {
+        ...serviceUser,
+        organizationId: organization.id,
+        isActive: true,
+        passwordHash: hashPassword(adminPassword),
+      },
+      create: {
+        ...serviceUser,
+        organizationId: organization.id,
+        isActive: true,
+        passwordHash: hashPassword(adminPassword),
+      },
+    });
+  }
+
+  const companies = [
+    {
+      name: "Tradintek, Lietuva, UAB",
+      code: "302512994",
+      city: "Vilnius",
+      country: "Lithuania",
+    },
+    {
+      name: "Baltic Medical Solutions",
+      code: "305001245",
+      city: "Kaunas",
+      country: "Lithuania",
+    },
+    {
+      name: "Nordic Imaging Partners",
+      code: "556781230",
+      city: "Riga",
+      country: "Latvia",
+    },
+  ];
+
+  for (const company of companies) {
+    await db.company.upsert({
+      where: {
+        organizationId_name: {
+          organizationId: organization.id,
+          name: company.name,
+        },
+      },
+      update: company,
+      create: {
+        ...company,
+        organizationId: organization.id,
+      },
+    });
+  }
+
+  const manufacturers = [
+    {
+      name: "GE Healthcare",
+      code: "GEH",
+      country: "United States",
+      website: "https://www.gehealthcare.com",
+    },
+    {
+      name: "Siemens Healthineers",
+      code: "SHL",
+      country: "Germany",
+      website: "https://www.siemens-healthineers.com",
+    },
+    {
+      name: "Olympus Medical",
+      code: "OLY",
+      country: "Japan",
+      website: "https://medical.olympusamerica.com",
+    },
+  ];
+
+  for (const manufacturer of manufacturers) {
+    await db.manufacturer.upsert({
+      where: {
+        organizationId_name: {
+          organizationId: organization.id,
+          name: manufacturer.name,
+        },
+      },
+      update: manufacturer,
+      create: {
+        ...manufacturer,
+        organizationId: organization.id,
+      },
+    });
+  }
+
+  const productDefinitions = [
+    {
+      code: "PRD-1001",
+      name: "Ultrasound Probe Kit",
+      sku: "USP-2200",
+      category: "Imaging",
+      status: "Active",
+      manufacturerName: "GE Healthcare",
+    },
+    {
+      code: "PRD-1002",
+      name: "Contrast Injector Set",
+      sku: "CIS-4100",
+      category: "Radiology",
+      status: "Active",
+      manufacturerName: "Siemens Healthineers",
+    },
+    {
+      code: "PRD-1003",
+      name: "Endoscopy Light Source",
+      sku: "ELS-5500",
+      category: "Endoscopy",
+      status: "Maintenance",
+      manufacturerName: "Olympus Medical",
+    },
+  ];
+
+  for (const product of productDefinitions) {
+    const manufacturer = await db.manufacturer.findFirstOrThrow({
+      where: {
+        organizationId: organization.id,
+        name: product.manufacturerName,
+      },
+    });
+
+    await db.product.upsert({
+      where: { code: product.code },
+      update: {
+        code: product.code,
+        name: product.name,
+        sku: product.sku,
+        category: product.category,
+        status: product.status,
+        manufacturerId: manufacturer.id,
+        organizationId: organization.id,
+      },
+      create: {
+        code: product.code,
+        name: product.name,
+        sku: product.sku,
+        category: product.category,
+        status: product.status,
+        manufacturerId: manufacturer.id,
+        organizationId: organization.id,
+      },
+    });
+  }
+
+  const equipmentDefinitions = [
+    {
+      code: "EQ-2001",
+      name: "Portable Ultrasound Console",
+      model: "Vscan Air CL",
+      serialNumber: "GE-ULS-88231",
+      category: "Imaging",
+      status: "Active",
+      manufacturerName: "GE Healthcare",
+    },
+    {
+      code: "EQ-2002",
+      name: "Angio Injector Console",
+      model: "Accutron HP-D",
+      serialNumber: "SHL-ANG-44391",
+      category: "Radiology",
+      status: "Maintenance",
+      manufacturerName: "Siemens Healthineers",
+    },
+    {
+      code: "EQ-2003",
+      name: "Endoscopy Camera Stack",
+      model: "OTV-S500",
+      serialNumber: "OLY-END-55210",
+      category: "Endoscopy",
+      status: "Active",
+      manufacturerName: "Olympus Medical",
+    },
+  ];
+
+  for (const equipment of equipmentDefinitions) {
+    const manufacturer = await db.manufacturer.findFirstOrThrow({
+      where: {
+        organizationId: organization.id,
+        name: equipment.manufacturerName,
+      },
+    });
+
+    await db.equipment.upsert({
+      where: { code: equipment.code },
+      update: {
+        code: equipment.code,
+        name: equipment.name,
+        model: equipment.model,
+        serialNumber: equipment.serialNumber,
+        category: equipment.category,
+        status: equipment.status,
+        manufacturerId: manufacturer.id,
+        organizationId: organization.id,
+      },
+      create: {
+        code: equipment.code,
+        name: equipment.name,
+        model: equipment.model,
+        serialNumber: equipment.serialNumber,
+        category: equipment.category,
+        status: equipment.status,
+        manufacturerId: manufacturer.id,
+        organizationId: organization.id,
+      },
+    });
+  }
 
   const systems = [
     {
@@ -115,6 +355,197 @@ async function main() {
         organizationId: organization.id,
       },
     });
+  }
+
+  const equipmentAssignments = [
+    { equipmentCode: "EQ-2001", systemCode: "1321-016" },
+    { equipmentCode: "EQ-2002", systemCode: "1015-783" },
+    { equipmentCode: "EQ-2003", systemCode: "1308-002" },
+  ];
+
+  for (const assignment of equipmentAssignments) {
+    const system = await db.system.findUniqueOrThrow({
+      where: { code: assignment.systemCode },
+    });
+
+    await db.equipment.update({
+      where: { code: assignment.equipmentCode },
+      data: {
+        systemId: system.id,
+      },
+    });
+  }
+
+  const serviceCaseDefinitions = [
+    {
+      code: "SRV-4001",
+      title: "Quarterly preventive maintenance",
+      summary:
+        "Complete routine checks, calibration review, and service log update for the ultrasound system.",
+      status: "Planned",
+      priority: "Medium",
+      scheduledAt: "2026-04-15T09:00:00.000Z",
+      completedAt: null,
+      systemCode: "1321-016",
+      equipmentCode: "EQ-2001",
+      assignedUsername: "marius",
+      tasks: [
+        "Review maintenance history",
+        "Run probe calibration",
+        "Update service report",
+      ],
+      notes: [
+        {
+          authorUsername: "ievag",
+          body: "Maintenance window confirmed with the clinical team for April 15 at 09:00.",
+        },
+      ],
+    },
+    {
+      code: "SRV-4002",
+      title: "Injector alarm diagnostics",
+      summary:
+        "Investigate intermittent pressure alarm and verify injector console stability before next patient use.",
+      status: "In Progress",
+      priority: "High",
+      scheduledAt: "2026-04-08T07:30:00.000Z",
+      completedAt: null,
+      systemCode: "1015-783",
+      equipmentCode: "EQ-2002",
+      assignedUsername: "marius",
+      tasks: [
+        "Inspect pressure alarm logs",
+        "Test injector console under load",
+        "Confirm release to clinical use",
+      ],
+      notes: [
+        {
+          authorUsername: "marius",
+          body: "Initial diagnostics show the pressure alarm appears after a warm restart. Keeping the case in progress until the full load test is complete.",
+        },
+      ],
+    },
+    {
+      code: "SRV-4003",
+      title: "Endoscopy video output verification",
+      summary:
+        "Validate video chain after reported signal drop and confirm image output on the clinical display.",
+      status: "Open",
+      priority: "Critical",
+      scheduledAt: null,
+      completedAt: null,
+      systemCode: "1308-002",
+      equipmentCode: "EQ-2003",
+      assignedUsername: "ievag",
+      tasks: [
+        "Validate video output chain",
+        "Check display cable and connectors",
+        "Document findings for escalation",
+      ],
+      notes: [
+        {
+          authorUsername: "ievag",
+          body: "Hospital reported an intermittent signal drop during the morning list. Waiting for on-site technician confirmation.",
+        },
+        {
+          authorUsername: "marius",
+          body: "Prepared spare video cable and diagnostic display for the first site visit.",
+        },
+      ],
+    },
+  ];
+
+  for (const serviceCase of serviceCaseDefinitions) {
+    const system = await db.system.findUniqueOrThrow({
+      where: { code: serviceCase.systemCode },
+    });
+
+    const equipment = await db.equipment.findUniqueOrThrow({
+      where: { code: serviceCase.equipmentCode },
+    });
+
+    const assignedUser = await db.user.findUniqueOrThrow({
+      where: { username: serviceCase.assignedUsername },
+    });
+
+    await db.serviceCase.upsert({
+      where: {
+        code: serviceCase.code,
+      },
+      update: {
+        title: serviceCase.title,
+        summary: serviceCase.summary,
+        status: serviceCase.status,
+        priority: serviceCase.priority,
+        scheduledAt: serviceCase.scheduledAt
+          ? new Date(serviceCase.scheduledAt)
+          : null,
+        completedAt: serviceCase.completedAt
+          ? new Date(serviceCase.completedAt)
+          : null,
+        systemId: system.id,
+        equipmentId: equipment.id,
+        organizationId: organization.id,
+        assignedUserId: assignedUser.id,
+      },
+      create: {
+        code: serviceCase.code,
+        title: serviceCase.title,
+        summary: serviceCase.summary,
+        status: serviceCase.status,
+        priority: serviceCase.priority,
+        scheduledAt: serviceCase.scheduledAt
+          ? new Date(serviceCase.scheduledAt)
+          : null,
+        completedAt: serviceCase.completedAt
+          ? new Date(serviceCase.completedAt)
+          : null,
+        systemId: system.id,
+        equipmentId: equipment.id,
+        organizationId: organization.id,
+        assignedUserId: assignedUser.id,
+      },
+    });
+
+    const persistedCase = await db.serviceCase.findUniqueOrThrow({
+      where: { code: serviceCase.code },
+    });
+
+    await db.serviceTask.deleteMany({
+      where: {
+        serviceCaseId: persistedCase.id,
+      },
+    });
+
+    await db.serviceTask.createMany({
+      data: serviceCase.tasks.map((title, index) => ({
+        title,
+        sortOrder: index,
+        isCompleted: false,
+        completedAt: null,
+        serviceCaseId: persistedCase.id,
+      })),
+    });
+
+    await db.serviceNote.deleteMany({
+      where: {
+        serviceCaseId: persistedCase.id,
+      },
+    });
+
+    for (const note of serviceCase.notes) {
+      const author = await db.user.findUniqueOrThrow({
+        where: { username: note.authorUsername },
+      });
+
+      await db.serviceNote.create({
+        data: {
+          body: note.body,
+          serviceCaseId: persistedCase.id,
+          authorId: author.id,
+        },
+      });
+    }
   }
 
   console.log("Seed complete.");
