@@ -55,6 +55,7 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Documents",
     href: "/documents",
     description: "Document records, uploads, and generated outputs.",
+    children: [{ label: "Generated reports", href: "/documents" }],
   },
   {
     label: "Office",

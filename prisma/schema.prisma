@@ -13,14 +13,15 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  companies     Company[]
-  equipment     Equipment[]
-  manufacturers Manufacturer[]
-  products      Product[]
-  users         User[]
-  hospitals     Hospital[]
-  serviceCases  ServiceCase[]
-  systems       System[]
+  companies        Company[]
+  equipment        Equipment[]
+  generatedReports GeneratedReport[]
+  manufacturers    Manufacturer[]
+  products         Product[]
+  users            User[]
+  hospitals        Hospital[]
+  serviceCases     ServiceCase[]
+  systems          System[]
 }
 
 model User {
@@ -36,6 +37,7 @@ model User {
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  generatedReports        GeneratedReport[]      @relation("GeneratedReportCreatedBy")
   assignedServiceCases ServiceCase[] @relation("ServiceCaseAssignee")
   serviceAssignmentEvents ServiceAssignmentEvent[] @relation("ServiceAssignmentChangedBy")
   serviceNotes            ServiceNote[] @relation("ServiceNoteAuthor")
@@ -278,4 +280,26 @@ model ServiceNote {
   @@index([serviceCaseId])
   @@index([authorId])
   @@index([createdAt])
+}
+
+model GeneratedReport {
+  id             String   @id @default(cuid())
+  reportType     String
+  title          String
+  scopeLabel     String
+  dateWindowLabel String
+  filters        Json
+  snapshot       Json
+  organizationId String
+  createdById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdBy    User?        @relation("GeneratedReportCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([createdAt])
+  @@index([reportType])
 }

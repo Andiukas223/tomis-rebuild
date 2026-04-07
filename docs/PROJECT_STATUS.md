@@ -7,7 +7,8 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 - protected auth and session management
 - real registry master data
 - catalog entities with linked relationships
-- service operations with dispatch, task execution, attachments, notes, completion records, and reporting
+- service operations with dispatch, task execution, attachments, notes, completion records, reporting, and printable summaries
+- document records for saved generated service reports
 
 ## Completed Foundations
 
@@ -51,6 +52,13 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 - quick status transitions
 - dashboard visibility for service operations and dispatch pressure
 - service reports page with filtered KPIs and CSV-aligned exports
+- printable service operational summary route
+
+### Documents
+
+- generated report records list
+- generated report detail pages with saved KPI snapshots
+- save-from-report workflow for service operational summaries
 
 ## Important Architecture Decisions
 
@@ -59,6 +67,7 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 - destructive actions are guarded both in the API and in the UI
 - service workflow data is normalized into `ServiceCase`, `ServiceTask`, `ServiceAttachment`, and `ServiceNote`
 - assignment changes are normalized into `ServiceAssignmentEvent`
+- generated report snapshots are normalized into `GeneratedReport`
 - uploaded service files are stored on disk under a mounted Docker volume path
 
 ## Verified Behaviors
@@ -74,18 +83,20 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 - service completion details save and render correctly
 - dispatch assignment events are written and appear in service history
 - service reports render with filters and filtered CSV export
+- printable service reports render correctly
+- saved service reports appear in Documents and preserve snapshot data
 
 ## Known Gaps
 
 - login page does not yet auto-forward valid sessions again after the loop fix
 - the attachment route triggers a non-blocking Turbopack tracing warning during build
-- reporting is useful, but still lacks deeper grouped KPI breakdowns and print-ready outputs
+- generated reports do not yet support custom naming, notes, or dedicated export formats
 - role-based permissions are still broad authenticated access rather than explicit capability rules
 
 ## Next Recommended Steps
 
-1. add grouped KPI views and more drill-down slices to service reports
-2. generate shareable operational report outputs from the service metrics
+1. add naming and notes to generated report records
+2. let saved reports reopen into printable document views or dedicated export outputs
 3. introduce role-based permissions beyond authenticated access
 4. add end-to-end coverage for auth and service flows
 5. expand into the next operational business modules

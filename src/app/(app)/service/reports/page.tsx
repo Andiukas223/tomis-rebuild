@@ -1,7 +1,13 @@
 import Link from "next/link";
-import { db } from "@/lib/db";
 import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
+import { SaveServiceReportButton } from "@/components/service/save-service-report-button";
+import {
+  buildServiceReportQuery,
+  formatHours,
+  getServiceReportData,
+  normalizeServiceReportFilters,
+} from "@/lib/service-reporting";
 
 export const dynamic = "force-dynamic";
 
@@ -14,220 +20,26 @@ type ServiceReportsPageProps = {
   }>;
 };
 
-function getHoursBetween(start: Date, end: Date) {
-  return Math.max(0, (end.getTime() - start.getTime()) / 3_600_000);
-}
-
-function formatHours(value: number | null) {
-  if (value === null || Number.isNaN(value)) {
-    return "N/A";
-  }
-
-  return `${value.toFixed(1)} h`;
-}
-
 export default async function ServiceReportsPage({
   searchParams,
 }: ServiceReportsPageProps) {
   const user = await getServerSessionUser();
+  const filters = normalizeServiceReportFilters(await searchParams);
   const {
-    assigneeId = "",
-    dateFrom = "",
-    dateTo = "",
-    status = "",
-  } = await searchParams;
-  const normalizedAssigneeId = assigneeId.trim();
-  const normalizedDateFrom = dateFrom.trim();
-  const normalizedDateTo = dateTo.trim();
-  const normalizedStatus = status.trim();
-  const createdAtFilter = {
-    ...(normalizedDateFrom
-      ? {
-          gte: new Date(`${normalizedDateFrom}T00:00:00.000Z`),
-        }
-      : {}),
-    ...(normalizedDateTo
-      ? {
-          lt: new Date(
-            `${normalizedDateTo}T23:59:59.999Z`,
-          ),
-        }
-      : {}),
-  };
-  const serviceCaseWhere = user
-    ? {
-        organizationId: user.organizationId,
-        ...(normalizedAssigneeId === "unassigned"
-          ? { assignedUserId: null }
-          : normalizedAssigneeId
-            ? { assignedUserId: normalizedAssigneeId }
-            : {}),
-        ...(normalizedStatus && normalizedStatus !== "all"
-          ? { status: normalizedStatus }
-          : {}),
-        ...(Object.keys(createdAtFilter).length > 0
-          ? { createdAt: createdAtFilter }
-          : {}),
-      }
-    : undefined;
-
-  const [serviceCases, assignmentEvents, serviceUsers] = user
-    ? await Promise.all([
-        db.serviceCase.findMany({
-          where: serviceCaseWhere,
-          include: {
-            system: true,
-            assignedUser: true,
-            tasks: true,
-          },
-          orderBy: [{ createdAt: "desc" }],
-        }),
-        db.serviceAssignmentEvent.findMany({
-          where: {
-            serviceCase: {
-              ...(serviceCaseWhere ?? { organizationId: user.organizationId }),
-            },
-          },
-          select: {
-            id: true,
-            serviceCaseId: true,
-            createdAt: true,
-          },
-        }),
-        db.user.findMany({
-          where: {
-            organizationId: user.organizationId,
-            isActive: true,
-          },
-          orderBy: [{ fullName: "asc" }],
-          select: {
-            id: true,
-            fullName: true,
-          },
-        }),
-      ])
-    : [[], [], []];
-
-  const now = new Date();
-  const activeCases = serviceCases.filter((item) =>
-    ["Open", "Planned", "In Progress"].includes(item.status),
-  );
-  const completedCases = serviceCases.filter(
-    (item) => item.status === "Done" && item.completedAt,
-  );
-  const assignedActiveCases = activeCases.filter((item) => item.assignedUserId);
-  const unassignedActiveCases = activeCases.filter((item) => !item.assignedUserId);
-  const criticalUnassignedCases = unassignedActiveCases.filter(
-    (item) => item.priority === "Critical",
-  );
-
-  const agingBuckets = {
-    under24: activeCases.filter(
-      (item) => getHoursBetween(item.createdAt, now) < 24,
-    ).length,
-    under72: activeCases.filter((item) => {
-      const hours = getHoursBetween(item.createdAt, now);
-      return hours >= 24 && hours < 72;
-    }).length,
-    over72: activeCases.filter(
-      (item) => getHoursBetween(item.createdAt, now) >= 72,
-    ).length,
-  };
-
-  const avgActiveAgeHours =
-    activeCases.length > 0
-      ? activeCases.reduce(
-          (sum, item) => sum + getHoursBetween(item.createdAt, now),
-          0,
-        ) / activeCases.length
-      : null;
-
-  const avgCompletionHours =
-    completedCases.length > 0
-      ? completedCases.reduce((sum, item) => {
-          return sum + getHoursBetween(item.createdAt, item.completedAt!);
-        }, 0) / completedCases.length
-      : null;
-
-  const assignmentCoverage =
-    activeCases.length > 0
-      ? (assignedActiveCases.length / activeCases.length) * 100
-      : 0;
-
-  const assignmentEventCountByCase = new Map<string, number>();
-  for (const event of assignmentEvents) {
-    assignmentEventCountByCase.set(
-      event.serviceCaseId,
-      (assignmentEventCountByCase.get(event.serviceCaseId) ?? 0) + 1,
-    );
-  }
-
-  const avgAssignmentChangesPerCase =
-    serviceCases.length > 0
-      ? serviceCases.reduce(
-          (sum, item) => sum + (assignmentEventCountByCase.get(item.id) ?? 0),
-          0,
-        ) / serviceCases.length
-      : 0;
-
-  const technicianRows = serviceUsers.map((serviceUser) => {
-    const assignedCases = serviceCases.filter(
-      (item) => item.assignedUserId === serviceUser.id,
-    );
-    const assignedActive = assignedCases.filter((item) =>
-      ["Open", "Planned", "In Progress"].includes(item.status),
-    );
-    const assignedDone = assignedCases.filter(
-      (item) => item.status === "Done" && item.completedAt,
-    );
-
-    const avgDoneHours =
-      assignedDone.length > 0
-        ? assignedDone.reduce((sum, item) => {
-            return sum + getHoursBetween(item.createdAt, item.completedAt!);
-          }, 0) / assignedDone.length
-        : null;
-
-    return {
-      id: serviceUser.id,
-      fullName: serviceUser.fullName,
-      activeCount: assignedActive.length,
-      overdueCount: assignedActive.filter(
-        (item) => item.scheduledAt && item.scheduledAt < now,
-      ).length,
-      completedCount: assignedDone.length,
-      avgDoneHours,
-      taskProgress:
-        assignedActive.length > 0
-          ? `${assignedActive.reduce(
-              (sum, item) =>
-                sum + item.tasks.filter((task) => task.isCompleted).length,
-              0,
-            )}/${assignedActive.reduce((sum, item) => sum + item.tasks.length, 0)}`
-          : "0/0",
-    };
-  });
-
-  const highestRiskCases = [...activeCases]
-    .sort((left, right) => {
-      const priorityRank = {
-        Critical: 4,
-        High: 3,
-        Medium: 2,
-        Low: 1,
-      } as const;
-
-      const priorityDiff =
-        priorityRank[right.priority as keyof typeof priorityRank] -
-        priorityRank[left.priority as keyof typeof priorityRank];
-
-      if (priorityDiff !== 0) {
-        return priorityDiff;
-      }
-
-      return right.createdAt.getTime() - left.createdAt.getTime();
-    })
-    .slice(0, 8);
+    serviceUsers,
+    technicianRows,
+    highestRiskCases,
+    criticalUnassignedCases,
+    agingBuckets,
+    avgActiveAgeHours,
+    avgCompletionHours,
+    assignmentCoverage,
+    avgAssignmentChangesPerCase,
+    filteredTechnicianCards,
+    reportScopeLabel,
+    windowLabel,
+  } = await getServiceReportData(user, filters);
+  const reportQuery = buildServiceReportQuery(filters);
 
   return (
     <div className="space-y-6">
@@ -238,7 +50,7 @@ export default async function ServiceReportsPage({
         >
           <select
             name="assigneeId"
-            defaultValue={normalizedAssigneeId}
+            defaultValue={filters.assigneeId}
             aria-label="Filter reports by technician"
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
           >
@@ -252,7 +64,7 @@ export default async function ServiceReportsPage({
           </select>
           <select
             name="status"
-            defaultValue={normalizedStatus}
+            defaultValue={filters.status}
             aria-label="Filter reports by status"
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
           >
@@ -265,14 +77,14 @@ export default async function ServiceReportsPage({
           <input
             type="date"
             name="dateFrom"
-            defaultValue={normalizedDateFrom}
+            defaultValue={filters.dateFrom}
             aria-label="Filter reports from date"
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
           />
           <input
             type="date"
             name="dateTo"
-            defaultValue={normalizedDateTo}
+            defaultValue={filters.dateTo}
             aria-label="Filter reports to date"
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
           />
@@ -304,14 +116,14 @@ export default async function ServiceReportsPage({
               Back to operations
             </Link>
             <Link
-              href={`/api/service-cases/export?${new URLSearchParams({
-                ...(normalizedAssigneeId
-                  ? { assigneeId: normalizedAssigneeId }
-                  : {}),
-                ...(normalizedStatus ? { status: normalizedStatus } : {}),
-                ...(normalizedDateFrom ? { dateFrom: normalizedDateFrom } : {}),
-                ...(normalizedDateTo ? { dateTo: normalizedDateTo } : {}),
-              }).toString()}`}
+              href={reportQuery ? `/service/reports/print?${reportQuery}` : "/service/reports/print"}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            >
+              Printable summary
+            </Link>
+            <SaveServiceReportButton filters={filters} />
+            <Link
+              href={reportQuery ? `/api/service-cases/export?${reportQuery}` : "/api/service-cases/export"}
               className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
             >
               Export CSV
@@ -319,6 +131,31 @@ export default async function ServiceReportsPage({
           </>
         }
       />
+
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Report scope
+          </p>
+          <p className="mt-3 text-2xl font-semibold text-slate-950">
+            {reportScopeLabel}
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            Current technician grouping for this report view.
+          </p>
+        </article>
+        <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Date window
+          </p>
+          <p className="mt-3 text-2xl font-semibold text-slate-950">
+            {windowLabel}
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            Case creation range used for the current KPI grouping.
+          </p>
+        </article>
+      </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
@@ -366,6 +203,91 @@ export default async function ServiceReportsPage({
           </p>
         </article>
       </section>
+
+      {filteredTechnicianCards.length > 0 ? (
+        <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">
+                Technician KPI groups
+              </h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Snapshot cards grouped by technician for the current filter window.
+              </p>
+            </div>
+            <p className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              {filteredTechnicianCards.length} technicians in view
+            </p>
+          </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredTechnicianCards.map((row) => (
+              <article
+                key={row.id}
+                className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-base font-semibold text-slate-950">
+                      {row.fullName}
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Filtered KPI group
+                    </p>
+                  </div>
+                  <Link
+                    href={`/service/reports?${new URLSearchParams({
+                      assigneeId: row.id,
+                      ...(filters.status ? { status: filters.status } : {}),
+                      ...(filters.dateFrom ? { dateFrom: filters.dateFrom } : {}),
+                      ...(filters.dateTo ? { dateTo: filters.dateTo } : {}),
+                    }).toString()}`}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                  >
+                    Focus
+                  </Link>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                      Active
+                    </p>
+                    <p className="mt-2 text-xl font-semibold text-slate-950">
+                      {row.activeCount}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                      Completed
+                    </p>
+                    <p className="mt-2 text-xl font-semibold text-slate-950">
+                      {row.completedCount}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                      Overdue
+                    </p>
+                    <p className="mt-2 text-xl font-semibold text-slate-950">
+                      {row.overdueCount}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                      Avg done time
+                    </p>
+                    <p className="mt-2 text-xl font-semibold text-slate-950">
+                      {formatHours(row.avgDoneHours)}
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-4 text-xs text-slate-500">
+                  Task progress in active cases: {row.taskProgress}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">

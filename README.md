@@ -22,7 +22,8 @@ The rebuild now includes:
 - protected shell with sidebar, topbar, dashboard, and module routing
 - registry master data for hospitals, companies, and manufacturers
 - catalog modules for systems, products, and equipment
-- service operations with assignment, task checklists, attachments, notes, completion records, dispatch actions, and reporting
+- service operations with assignment, task checklists, attachments, notes, completion records, dispatch actions, reporting, and printable summaries
+- generated document records for saved service report snapshots
 - organization-scoped APIs and server-rendered detail pages
 
 Planning and reverse-engineering notes live one level above this app in the parent workspace documentation.
@@ -89,9 +90,11 @@ Planning and reverse-engineering notes live one level above this app in the pare
 
 - `/service`
 - `/service/reports`
+- `/service/reports/print`
 - `/service/new`
 - `/service/[id]`
 - `/service/[id]/edit`
+- `/api/reports/service-summary`
 - `/api/service-cases`
 - `/api/service-cases/[id]`
 - `/api/service-cases/[id]/assignment`
@@ -103,6 +106,11 @@ Planning and reverse-engineering notes live one level above this app in the pare
 - `/api/service-cases/[id]/notes/[noteId]`
 - `/api/service-cases/export`
 - `/api/service-tasks/[id]`
+
+### Documents
+
+- `/documents`
+- `/documents/[id]`
 
 ## Data Model
 
@@ -122,6 +130,7 @@ The current Prisma schema includes:
 - `ServiceAttachment`
 - `ServiceNote`
 - `ServiceAssignmentEvent`
+- `GeneratedReport`
 
 Key relationships:
 
@@ -131,6 +140,7 @@ Key relationships:
 - `ServiceCase` references `System`, optional `Equipment`, and optional assigned `User`
 - `ServiceTask`, `ServiceAttachment`, and `ServiceNote` all belong to `ServiceCase`
 - `ServiceAssignmentEvent` captures assignment ownership changes for `ServiceCase`
+- `GeneratedReport` stores saved document snapshots for filtered service operational summaries
 
 ## Local Setup
 
@@ -208,7 +218,7 @@ docker compose up -d db
 Recommended next implementation slices:
 
 1. grouped KPI views and deeper slicing on service reports
-2. generated operational report output or printable summaries
+2. richer generated report records with naming, notes, and reusable output flows
 3. stronger role and permission enforcement
 4. test coverage for auth and critical service/catalog flows
 5. broader module expansion beyond service, catalog, and registry
@@ -220,3 +230,4 @@ Recommended next implementation slices:
 - service attachments persist under `storage/service-attachments`
 - linked registry records are protected from destructive actions when in active use
 - service reporting now supports technician, status, and date-range filtered review plus matching CSV export
+- printable service summaries can now be saved into `Documents` as stored report records
