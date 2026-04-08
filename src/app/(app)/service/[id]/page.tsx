@@ -147,6 +147,60 @@ export default async function ServiceCaseDetailPage({
     },
   });
 
+  const relatedServiceCases = await db.serviceCase.findMany({
+    where: {
+      organizationId: user.organizationId,
+      id: {
+        not: serviceCase.id,
+      },
+      OR: [
+        {
+          systemId: serviceCase.systemId,
+        },
+        {
+          system: {
+            hospitalId: serviceCase.system.hospitalId,
+          },
+        },
+      ],
+    },
+    orderBy: [{ scheduledAt: "asc" }, { updatedAt: "desc" }],
+    include: {
+      assignedUser: true,
+      system: true,
+      equipment: true,
+      tasks: true,
+    },
+    take: 8,
+  });
+  const recentVisitThreshold = new Date(
+    serviceCase.updatedAt.getTime() - 1000 * 60 * 60 * 24,
+  );
+
+  const upcomingRelatedCases = relatedServiceCases
+    .filter(
+      (relatedCase) =>
+        relatedCase.status !== "Done" &&
+        (relatedCase.scheduledAt === null ||
+          relatedCase.scheduledAt >= recentVisitThreshold),
+    )
+    .slice(0, 4);
+
+  const completedRelatedCases = relatedServiceCases
+    .filter(
+      (relatedCase) =>
+        relatedCase.status === "Done" || Boolean(relatedCase.completedAt),
+    )
+    .sort((left, right) => {
+      const leftTime =
+        left.completedAt?.getTime() ?? left.updatedAt.getTime();
+      const rightTime =
+        right.completedAt?.getTime() ?? right.updatedAt.getTime();
+
+      return rightTime - leftTime;
+    })
+    .slice(0, 4);
+
   const completedTaskCount = serviceCase.tasks.filter(
     (task) => task.isCompleted,
   ).length;
@@ -333,6 +387,153 @@ export default async function ServiceCaseDetailPage({
                 <p className="mt-2">No specific equipment is attached.</p>
               )}
             </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Next actions
+              </p>
+              <div className="mt-3 grid gap-2">
+                {canManageService ? (
+                  <Link
+                    href={`/service/new?systemId=${serviceCase.systemId}${serviceCase.equipmentId ? `&equipmentId=${serviceCase.equipmentId}` : ""}`}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                  >
+                    Schedule follow-up case
+                  </Link>
+                ) : null}
+                <Link
+                  href={`/service?systemId=${serviceCase.systemId}`}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  View system service history
+                </Link>
+                <Link
+                  href={`/service/tasks`}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  Open technician task queue
+                </Link>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">
+                Planned and active visits
+              </h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Other open service work linked to the same system or hospital so the next visit can be planned in context.
+              </p>
+            </div>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              {upcomingRelatedCases.length} linked
+            </span>
+          </div>
+          <div className="mt-5 space-y-3">
+            {upcomingRelatedCases.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+                No additional planned or active visits are linked to this service context yet.
+              </p>
+            ) : (
+              upcomingRelatedCases.map((relatedCase) => (
+                <div
+                  key={relatedCase.id}
+                  className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 md:flex-row md:items-start md:justify-between"
+                >
+                  <div className="space-y-1">
+                    <Link
+                      href={`/service/${relatedCase.id}`}
+                      className="text-sm font-semibold text-sky-700 hover:underline"
+                    >
+                      {relatedCase.code} - {relatedCase.title}
+                    </Link>
+                    <p className="text-xs text-slate-500">
+                      {relatedCase.system.code} - {relatedCase.system.name}
+                      {relatedCase.equipment
+                        ? ` - ${relatedCase.equipment.code}`
+                        : ""}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {relatedCase.assignedUser
+                        ? relatedCase.assignedUser.fullName
+                        : "Unassigned"}
+                      {" - "}
+                      {relatedCase.scheduledAt
+                        ? relatedCase.scheduledAt.toLocaleString()
+                        : "No visit date"}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+                      {relatedCase.status}
+                    </span>
+                    <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700">
+                      {relatedCase.priority}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </article>
+
+        <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">
+                Recent completed history
+              </h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Recently closed work for the same system or hospital to support diagnostics and follow-up planning.
+              </p>
+            </div>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              {completedRelatedCases.length} completed
+            </span>
+          </div>
+          <div className="mt-5 space-y-3">
+            {completedRelatedCases.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+                No completed history is linked to this service context yet.
+              </p>
+            ) : (
+              completedRelatedCases.map((relatedCase) => (
+                <div
+                  key={relatedCase.id}
+                  className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <Link
+                      href={`/service/${relatedCase.id}`}
+                      className="text-sm font-semibold text-sky-700 hover:underline"
+                    >
+                      {relatedCase.code} - {relatedCase.title}
+                    </Link>
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+                      {relatedCase.status}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Completed{" "}
+                    {relatedCase.completedAt
+                      ? relatedCase.completedAt.toLocaleString()
+                      : relatedCase.updatedAt.toLocaleString()}
+                    {" - "}
+                    {relatedCase.assignedUser
+                      ? relatedCase.assignedUser.fullName
+                      : "No technician"}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {relatedCase.summary ?? "No summary recorded."}
+                  </p>
+                </div>
+              ))
+            )}
           </div>
         </article>
       </section>

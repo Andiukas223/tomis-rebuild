@@ -83,24 +83,27 @@ The rebuild is now a working multi-module business app, not just a scaffold. The
 
 Priority order from highest impact to lowest:
 
-1. service workflow refinement
-2. compact GUI parity inside list and table surfaces
-3. bug fixing and UX consistency pass
-4. tasks module
-5. warehouse foundation
-6. documents expansion
-7. master data expansion
-8. sales and order workflows
-9. migration tooling
-10. automated QA coverage
-11. production hardening
-12. administration and role-management UI
+1. populate realistic linked data across Catalog, Registry, and Service
+2. deepen Service detail pages and add secondary related sections
+3. expand Service breadth toward source-web parity
+4. compact GUI parity inside list and table surfaces
+5. bug fixing and UX consistency pass
+6. tasks module
+7. warehouse foundation
+8. documents expansion
+9. master data expansion
+10. sales and order workflows
+11. migration tooling
+12. automated QA coverage
+13. production hardening
+14. administration and role-management UI
 
 Detailed milestone breakdown:
 
 - see [ROADMAP.md](/c:/Users/Andrejus/Documents/PROJEKTELIAI%20VS%20CODE/T%20analysis/tomis-rebuild/docs/ROADMAP.md)
 - visual reference: see [GUI_REFERENCE.md](/c:/Users/Andrejus/Documents/PROJEKTELIAI%20VS%20CODE/T%20analysis/tomis-rebuild/docs/GUI_REFERENCE.md)
 - multi-step pattern reference: see [GUIDED_INTAKE_FLOW.md](/c:/Users/Andrejus/Documents/PROJEKTELIAI%20VS%20CODE/T%20analysis/tomis-rebuild/docs/GUIDED_INTAKE_FLOW.md)
+- source comparison plan: see [SOURCE_WEB_IMPROVEMENT_PLAN.md](/c:/Users/Andrejus/Documents/PROJEKTELIAI%20VS%20CODE/T%20analysis/tomis-rebuild/docs/SOURCE_WEB_IMPROVEMENT_PLAN.md)
 
 ## Important Architecture Decisions
 
@@ -144,11 +147,11 @@ Detailed milestone breakdown:
 
 ## Next Recommended Steps
 
-1. deepen service workflow with stronger planning views and broader technician execution coverage
-2. compact the table, filter, and list internals in Catalog, Service, and Documents
-3. run a bug and UX consistency pass across Documents, Service, Catalog, and the new permission states
-4. start the dedicated Tasks module using the richer service-task model as the foundation
-5. begin Warehouse foundations for service-linked stock usage
+1. raise the seed and linked-record volume so lists, pagination, and status views feel operational
+2. deepen service detail pages with related documents, visits, and next-step sections
+3. add the next Service submodules from the source web, starting with defect acts and scheduled jobs
+4. compact the table, filter, and list internals in Catalog, Service, and Documents
+5. run a bug and UX consistency pass across Documents, Service, Catalog, and the new permission states
 
 ## Active GUI Work
 

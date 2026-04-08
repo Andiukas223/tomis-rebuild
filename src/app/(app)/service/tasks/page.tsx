@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { MetricStrip } from "@/components/app/metric-strip";
 import { CategoryIndexList } from "@/components/app/category-index-list";
 import { RestrictedAccess } from "@/components/app/restricted-access";
+import { RecentCreatedServiceCases } from "@/components/service/recent-created-service-cases";
 
 export const dynamic = "force-dynamic";
 
@@ -52,78 +53,91 @@ export default async function ServiceTasksPage({
   const nextSevenDays = new Date(endOfToday);
   nextSevenDays.setDate(nextSevenDays.getDate() + 7);
 
-  const assignees = await db.user.findMany({
-    where: {
-      organizationId: user.organizationId,
-      isActive: true,
-    },
-    orderBy: [{ fullName: "asc" }],
-    select: {
-      id: true,
-      fullName: true,
-    },
-  });
-
-  const tasks = await db.serviceTask.findMany({
-    where: {
-      serviceCase: {
+  const [assignees, tasks, recentlyCreatedCases] = await Promise.all([
+    db.user.findMany({
+      where: {
         organizationId: user.organizationId,
+        isActive: true,
       },
-      ...(normalizedAssigneeId === "unassigned"
-        ? { assignedUserId: null }
-        : normalizedAssigneeId === "me"
-          ? { assignedUserId: user.id }
-          : normalizedAssigneeId
-            ? { assignedUserId: normalizedAssigneeId }
+      orderBy: [{ fullName: "asc" }],
+      select: {
+        id: true,
+        fullName: true,
+      },
+    }),
+    db.serviceTask.findMany({
+      where: {
+        serviceCase: {
+          organizationId: user.organizationId,
+        },
+        ...(normalizedAssigneeId === "unassigned"
+          ? { assignedUserId: null }
+          : normalizedAssigneeId === "me"
+            ? { assignedUserId: user.id }
+            : normalizedAssigneeId
+              ? { assignedUserId: normalizedAssigneeId }
+              : {}),
+        ...(normalizedCompletion === "open"
+          ? { isCompleted: false }
+          : normalizedCompletion === "done"
+            ? { isCompleted: true }
             : {}),
-      ...(normalizedCompletion === "open"
-        ? { isCompleted: false }
-        : normalizedCompletion === "done"
-          ? { isCompleted: true }
-          : {}),
-      ...(normalizedWindow === "overdue"
-        ? {
-            dueAt: {
-              lt: startOfToday,
-            },
-            isCompleted: false,
-          }
-        : normalizedWindow === "today"
+        ...(normalizedWindow === "overdue"
           ? {
               dueAt: {
-                gte: startOfToday,
-                lt: endOfToday,
+                lt: startOfToday,
               },
+              isCompleted: false,
             }
-          : normalizedWindow === "next7"
+          : normalizedWindow === "today"
             ? {
                 dueAt: {
-                  gte: endOfToday,
-                  lt: nextSevenDays,
+                  gte: startOfToday,
+                  lt: endOfToday,
                 },
               }
-            : normalizedWindow === "unscheduled"
-              ? { dueAt: null }
-              : {}),
-    },
-    orderBy: [{ dueAt: "asc" }, { updatedAt: "desc" }],
-    include: {
-      assignedUser: true,
-      serviceCase: {
-        include: {
-          system: true,
-          equipment: true,
+            : normalizedWindow === "next7"
+              ? {
+                  dueAt: {
+                    gte: endOfToday,
+                    lt: nextSevenDays,
+                  },
+                }
+              : normalizedWindow === "unscheduled"
+                ? { dueAt: null }
+                : {}),
+      },
+      orderBy: [{ dueAt: "asc" }, { updatedAt: "desc" }],
+      include: {
+        assignedUser: true,
+        serviceCase: {
+          include: {
+            system: true,
+            equipment: true,
+          },
+        },
+        events: {
+          orderBy: [{ createdAt: "desc" }],
+          take: 1,
+          include: {
+            changedBy: true,
+          },
         },
       },
-      events: {
-        orderBy: [{ createdAt: "desc" }],
-        take: 1,
-        include: {
-          changedBy: true,
-        },
+    }),
+    db.serviceCase.findMany({
+      where: {
+        organizationId: user.organizationId,
       },
-    },
-  });
+      orderBy: [{ createdAt: "desc" }],
+      take: 5,
+      include: {
+        system: true,
+        assignedUser: true,
+        tasks: true,
+      },
+    }),
+  ]);
 
   const overdueCount = tasks.filter(
     (task) => task.dueAt && task.dueAt < startOfToday && !task.isCompleted,
@@ -220,6 +234,25 @@ export default async function ServiceTasksPage({
             meta: "Daily plan",
           },
         ]}
+      />
+
+      <RecentCreatedServiceCases
+        title="Recently created cases"
+        description="Jump back into freshly created work from the task area when the case still needs more filling or follow-up changes."
+        items={recentlyCreatedCases.map((item) => ({
+          id: item.id,
+          code: item.code,
+          title: item.title,
+          status: item.status,
+          priority: item.priority,
+          createdAtLabel: item.createdAt.toLocaleString(),
+          systemCode: item.system.code,
+          assigneeName: item.assignedUser?.fullName ?? null,
+          taskCount: item.tasks.length,
+          completedTaskCount: item.tasks.filter((task) => task.isCompleted).length,
+        }))}
+        actionHref="/service"
+        actionLabel="Open operations"
       />
 
       <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)]">

@@ -2,34 +2,66 @@
 
 ## Priority Order
 
-1. service workflow refinement
-2. compact GUI parity inside list and table surfaces
-3. bug fixing and UX consistency pass
-4. tasks module
-5. warehouse foundation
-6. documents expansion
-7. master data expansion
-8. sales and order workflows
-9. migration tooling
-10. automated QA coverage
-11. production hardening
-12. administration and role-management UI
+1. populate realistic linked data across Catalog, Registry, and Service
+2. deepen Service detail pages and add secondary related sections
+3. expand Service breadth toward source-web parity
+4. compact GUI parity inside list and table surfaces
+5. bug fixing and UX consistency pass
+6. tasks module
+7. warehouse foundation
+8. documents expansion
+9. master data expansion
+10. sales and order workflows
+11. migration tooling
+12. automated QA coverage
+13. production hardening
+14. administration and role-management UI
 
 ## Milestone Backlog
 
-### Milestone 1: Service Operations Upgrade
+### Milestone 1: Data Population And Linked Record Density
+
+Goal:
+
+- make the rebuild feel populated and operational instead of lightly seeded
+
+Tasks:
+
+- increase seed volume across registry, catalog, and service
+- add realistic linked record chains
+- ensure main lists exercise pagination and status diversity
+- add more active, draft, in-progress, and completed service work
+
+### Milestone 2: Service Operations Upgrade
 
 Goal:
 - turn Service into the strongest day-to-day operational module
 
 Tasks:
+- deepen service detail pages with related sections
 - refine technician execution flow
 - improve checklist and task execution UX
 - expand task-level history, ownership clarity, and stronger overdue visibility
 - improve dispatch and planning board behavior
 - extend follow-up and completion workflows
+- add richer related records such as visits, documents, and downstream actions
 
-### Milestone 2: Visual Parity and Guided Intake Flow
+### Milestone 3: Service Breadth Expansion
+
+Goal:
+
+- bring Service closer to the source system's operational module family
+
+Tasks:
+
+- defect acts
+- commercial offers
+- part orders
+- hospital contracts
+- vendor contracts
+- scheduled jobs
+
+### Milestone 4: Visual Parity and Guided Intake Flow
 
 Goal:
 - capture the Tradintek prototype visual language and reuse its strongest input-flow pattern in the rebuild
@@ -45,7 +77,7 @@ Tasks:
 - compact table and filter surfaces so the inner working areas match the new square, list-first page shells
 - reuse the shared `Guided Intake Flow` pattern for future heavy-input workflows
 
-### Milestone 3: Stabilization Pass
+### Milestone 5: Stabilization Pass
 
 Goal:
 - reduce friction across the modules that already exist
@@ -57,7 +89,7 @@ Tasks:
 - fix inconsistent copy and layout details
 - log and resolve high-frequency user-facing bugs
 
-### Milestone 4: Tasks Module
+### Milestone 6: Tasks Module
 
 Goal:
 - add a dedicated execution layer that complements Service
@@ -68,7 +100,7 @@ Tasks:
 - link tasks to service cases and assets
 - add dashboard visibility for outstanding work
 
-### Milestone 5: Warehouse Foundation
+### Milestone 7: Warehouse Foundation
 
 Goal:
 - start stock and movement tracking needed by service and future sales flows
@@ -79,7 +111,7 @@ Tasks:
 - reservation flow for service usage
 - asset and product linkage
 
-### Milestone 6: Documents Expansion
+### Milestone 8: Documents Expansion
 
 Goal:
 - evolve Documents from saved reports into a broader business module
@@ -90,7 +122,7 @@ Tasks:
 - better saved-report lifecycle handling
 - printable and downloadable handoff quality
 
-### Milestone 7: Master Data Expansion
+### Milestone 9: Master Data Expansion
 
 Goal:
 - normalize more business relationships before migration work begins
@@ -100,7 +132,7 @@ Tasks:
 - shared reference data patterns
 - broader search and filters across linked modules
 
-### Milestone 8: Sales and Orders
+### Milestone 10: Sales and Orders
 
 Goal:
 - extend the rebuild beyond service-led operations into commercial workflows
@@ -111,7 +143,7 @@ Tasks:
 - orders
 - company and document linkage
 
-### Milestone 9: Migration Tooling
+### Milestone 11: Migration Tooling
 
 Goal:
 - prepare controlled movement from the existing system into the rebuild
@@ -122,7 +154,7 @@ Tasks:
 - validate duplicates and broken references
 - run trial migrations against safe sample data
 
-### Milestone 10: QA Automation
+### Milestone 12: QA Automation
 
 Goal:
 - protect critical workflows from regressions
@@ -133,7 +165,7 @@ Tasks:
 - catalog and registry CRUD coverage
 - permission regression checks
 
-### Milestone 11: Production Hardening
+### Milestone 13: Production Hardening
 
 Goal:
 - make deployment and operations safe
@@ -145,7 +177,7 @@ Tasks:
 - environment separation
 - deployment checklist
 
-### Milestone 12: Administration and Roles
+### Milestone 14: Administration and Roles
 
 Goal:
 - add first-class internal administration for users and permissions

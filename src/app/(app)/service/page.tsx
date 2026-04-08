@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/app/page-header";
 import { MetricStrip } from "@/components/app/metric-strip";
 import { CategoryIndexList } from "@/components/app/category-index-list";
 import { ServiceCasesTable } from "@/components/service/service-cases-table";
+import { ServiceJobWizardTrigger } from "@/components/service/service-job-wizard-trigger";
+import { RecentCreatedServiceCases } from "@/components/service/recent-created-service-cases";
 
 export const dynamic = "force-dynamic";
 
@@ -96,100 +98,111 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
       ? equipmentContext.systemId
       : normalizedSystemId;
 
-  const assignees = user
-    ? await db.user.findMany({
-        where: {
-          organizationId: user.organizationId,
-          isActive: true,
-        },
-        orderBy: [{ fullName: "asc" }],
-        select: {
-          id: true,
-          fullName: true,
-        },
-      })
-    : [];
-
-  const serviceCases = user
-    ? await db.serviceCase.findMany({
-        where: {
-          organizationId: user.organizationId,
-          ...(normalizedStatus !== "all" ? { status: normalizedStatus } : {}),
-          ...(normalizedPriority !== "all"
-            ? { priority: normalizedPriority }
-            : {}),
-          ...(normalizedAssigneeId === "unassigned"
-            ? { assignedUserId: null }
-            : normalizedAssigneeId
-              ? { assignedUserId: normalizedAssigneeId }
+  const [assignees, serviceCases, recentlyCreatedCases] = user
+    ? await Promise.all([
+        db.user.findMany({
+          where: {
+            organizationId: user.organizationId,
+            isActive: true,
+          },
+          orderBy: [{ fullName: "asc" }],
+          select: {
+            id: true,
+            fullName: true,
+          },
+        }),
+        db.serviceCase.findMany({
+          where: {
+            organizationId: user.organizationId,
+            ...(normalizedStatus !== "all" ? { status: normalizedStatus } : {}),
+            ...(normalizedPriority !== "all"
+              ? { priority: normalizedPriority }
               : {}),
-          ...(normalizedScheduleWindow === "overdue"
-            ? {
-                scheduledAt: {
-                  lt: startOfToday,
-                },
-                status: {
-                  in: ["Open", "Planned", "In Progress"],
-                },
-              }
-            : normalizedScheduleWindow === "today"
+            ...(normalizedAssigneeId === "unassigned"
+              ? { assignedUserId: null }
+              : normalizedAssigneeId
+                ? { assignedUserId: normalizedAssigneeId }
+                : {}),
+            ...(normalizedScheduleWindow === "overdue"
               ? {
                   scheduledAt: {
-                    gte: startOfToday,
-                    lt: endOfToday,
+                    lt: startOfToday,
+                  },
+                  status: {
+                    in: ["Open", "Planned", "In Progress"],
                   },
                 }
-              : normalizedScheduleWindow === "next7"
+              : normalizedScheduleWindow === "today"
                 ? {
                     scheduledAt: {
-                      gte: endOfToday,
-                      lt: nextSevenDays,
+                      gte: startOfToday,
+                      lt: endOfToday,
                     },
                   }
-                : normalizedScheduleWindow === "unscheduled"
-                  ? { scheduledAt: null }
-                  : {}),
-          ...(effectiveSystemId ? { systemId: effectiveSystemId } : {}),
-          ...(equipmentContext ? { equipmentId: equipmentContext.id } : {}),
-          ...(normalizedQuery
-            ? {
-                OR: [
-                  { code: { contains: normalizedQuery, mode: "insensitive" } },
-                  {
-                    title: { contains: normalizedQuery, mode: "insensitive" },
-                  },
-                  {
-                    summary: { contains: normalizedQuery, mode: "insensitive" },
-                  },
-                  {
-                    system: {
-                      code: {
-                        contains: normalizedQuery,
-                        mode: "insensitive",
+                : normalizedScheduleWindow === "next7"
+                  ? {
+                      scheduledAt: {
+                        gte: endOfToday,
+                        lt: nextSevenDays,
+                      },
+                    }
+                  : normalizedScheduleWindow === "unscheduled"
+                    ? { scheduledAt: null }
+                    : {}),
+            ...(effectiveSystemId ? { systemId: effectiveSystemId } : {}),
+            ...(equipmentContext ? { equipmentId: equipmentContext.id } : {}),
+            ...(normalizedQuery
+              ? {
+                  OR: [
+                    { code: { contains: normalizedQuery, mode: "insensitive" } },
+                    {
+                      title: { contains: normalizedQuery, mode: "insensitive" },
+                    },
+                    {
+                      summary: { contains: normalizedQuery, mode: "insensitive" },
+                    },
+                    {
+                      system: {
+                        code: {
+                          contains: normalizedQuery,
+                          mode: "insensitive",
+                        },
                       },
                     },
-                  },
-                  {
-                    equipment: {
-                      code: {
-                        contains: normalizedQuery,
-                        mode: "insensitive",
+                    {
+                      equipment: {
+                        code: {
+                          contains: normalizedQuery,
+                          mode: "insensitive",
+                        },
                       },
                     },
-                  },
-                ],
-              }
-            : {}),
-        },
-        orderBy: [{ updatedAt: "desc" }],
-        include: {
-          system: true,
-          equipment: true,
-          assignedUser: true,
-          tasks: true,
-        },
-      })
-    : [];
+                  ],
+                }
+              : {}),
+          },
+          orderBy: [{ updatedAt: "desc" }],
+          include: {
+            system: true,
+            equipment: true,
+            assignedUser: true,
+            tasks: true,
+          },
+        }),
+        db.serviceCase.findMany({
+          where: {
+            organizationId: user.organizationId,
+          },
+          orderBy: [{ createdAt: "desc" }],
+          take: 5,
+          include: {
+            system: true,
+            assignedUser: true,
+            tasks: true,
+          },
+        }),
+      ])
+    : [[], [], []];
 
   const [totalCases, openCases, inProgressCases, criticalCases] = user
     ? await Promise.all([
@@ -403,15 +416,27 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
         description={contextDescription}
         actions={
           <>
+            {canManage ? (
+              <ServiceJobWizardTrigger
+                label="+ New Service Job"
+                className="rounded-[var(--radius-sm)] bg-[var(--orange)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--orange-dark)]"
+              />
+            ) : null}
+            <Link
+              href="/service/process-flow"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
+            >
+              Process Flow
+            </Link>
             <Link
               href="/service/reports"
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Open reports
             </Link>
             <Link
               href="/service/tasks"
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Open task queue
             </Link>
@@ -421,7 +446,7 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
                   ? "/service"
                   : "/service"
               }
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Refresh
             </Link>
@@ -443,20 +468,31 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
                   ? { scheduleWindow: normalizedScheduleWindow }
                   : {}),
               }).toString()}`}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Export CSV
             </a>
-            {canManage ? (
-              <Link
-                href={createHref}
-                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-              >
-                New service case
-              </Link>
-            ) : null}
           </>
         }
+      />
+
+      <RecentCreatedServiceCases
+        title="Recently created service cases"
+        description="Create, continue filling, and return to unfinished service work from the main operations page."
+        items={recentlyCreatedCases.map((item) => ({
+          id: item.id,
+          code: item.code,
+          title: item.title,
+          status: item.status,
+          priority: item.priority,
+          createdAtLabel: item.createdAt.toLocaleString(),
+          systemCode: item.system.code,
+          assigneeName: item.assignedUser?.fullName ?? null,
+          taskCount: item.tasks.length,
+          completedTaskCount: item.tasks.filter((task) => task.isCompleted).length,
+        }))}
+        actionHref="/service/new"
+        actionLabel="Create another"
       />
 
       {systemContext || equipmentContext ? (
@@ -587,6 +623,13 @@ export default async function ServicePage({ searchParams }: ServicePageProps) {
             description: "Operational KPIs, technician metrics, and exports.",
             count: "-",
             meta: "Review and export",
+          },
+          {
+            title: "Process flow",
+            href: "/service/process-flow",
+            description: "Visual service wizard flow with clickable operational stages.",
+            count: "8",
+            meta: "Wizard reference",
           },
         ]}
       />

@@ -4,9 +4,9 @@ import { getServerSessionUser } from "@/lib/server-session";
 import { PageHeader } from "@/components/app/page-header";
 import { RestrictedAccess } from "@/components/app/restricted-access";
 import {
-  ServiceCaseForm,
   type ServiceCaseFormValues,
 } from "@/components/service/service-case-form";
+import { ServiceCaseWizardForm } from "@/components/service/service-case-wizard-form";
 
 export const dynamic = "force-dynamic";
 
@@ -133,11 +133,10 @@ export default async function NewServiceCasePage({
       <PageHeader
         eyebrow="Service"
         title="Create service case"
-        description="Capture a new service request, planned visit, or maintenance job and tie it directly to the affected system."
+        description="Use the guided intake flow to capture a new service request, planned visit, or maintenance job step by step."
       />
 
-      <ServiceCaseForm
-        mode="create"
+      <ServiceCaseWizardForm
         systems={systems}
         equipment={equipment}
         assignees={assignees}

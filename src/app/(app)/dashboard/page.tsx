@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { MetricStrip } from "@/components/app/metric-strip";
 import { CategoryIndexList } from "@/components/app/category-index-list";
 import { AssignSuggestedTechnicianButton } from "@/components/service/assign-suggested-technician-button";
+import { RecentCreatedServiceCases } from "@/components/service/recent-created-service-cases";
 import { navigationGroups } from "@/lib/navigation";
 import { getNavigationGroupsForRole, hasCapability } from "@/lib/permissions";
 
@@ -22,6 +23,7 @@ export default async function DashboardPage() {
     openServiceCount,
     criticalServiceCount,
     recentServiceCases,
+    recentlyCreatedCases,
     activeServiceCases,
     upcomingScheduledCases,
     serviceUsers,
@@ -70,6 +72,18 @@ export default async function DashboardPage() {
         db.serviceCase.findMany({
           where: {
             organizationId: user.organizationId,
+          },
+          orderBy: [{ createdAt: "desc" }],
+          take: 5,
+          include: {
+            system: true,
+            assignedUser: true,
+            tasks: true,
+          },
+        }),
+        db.serviceCase.findMany({
+          where: {
+            organizationId: user.organizationId,
             status: {
               in: ["Open", "Planned", "In Progress"],
             },
@@ -108,7 +122,7 @@ export default async function DashboardPage() {
           },
         }),
       ])
-    : [0, 0, 0, 0, [], [], [], []];
+    : [0, 0, 0, 0, [], [], [], [], []];
 
   const now = new Date();
   const startOfToday = new Date(now);
@@ -204,20 +218,20 @@ export default async function DashboardPage() {
           <>
             <Link
               href="/service"
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Open service
             </Link>
             <Link
               href="/service/tasks"
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--text-mid)] transition-colors hover:bg-[var(--navy-pale)]"
             >
               Open task queue
             </Link>
             {canManageService ? (
               <Link
                 href="/service/new"
-                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+                className="rounded-[var(--radius-sm)] bg-[var(--orange)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--orange-dark)]"
               >
                 New service case
               </Link>
@@ -289,6 +303,25 @@ export default async function DashboardPage() {
             meta: "History",
           },
         ]}
+      />
+
+      <RecentCreatedServiceCases
+        title="Recently created service cases"
+        description="Continue filling unfinished cases directly from the dashboard before they disappear into the wider workload."
+        items={recentlyCreatedCases.map((item) => ({
+          id: item.id,
+          code: item.code,
+          title: item.title,
+          status: item.status,
+          priority: item.priority,
+          createdAtLabel: item.createdAt.toLocaleString(),
+          systemCode: item.system.code,
+          assigneeName: item.assignedUser?.fullName ?? null,
+          taskCount: item.tasks.length,
+          completedTaskCount: item.tasks.filter((task) => task.isCompleted).length,
+        }))}
+        actionHref="/service/new"
+        actionLabel="Create another"
       />
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">

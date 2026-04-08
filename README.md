@@ -30,6 +30,14 @@ The rebuild now includes:
 
 Planning and reverse-engineering notes live one level above this app in the parent workspace documentation.
 
+Key planning references in this repo:
+
+- [docs/ROADMAP.md](/c:/Users/Andrejus/Documents/PROJEKTELIAI%20VS%20CODE/T%20analysis/tomis-rebuild/docs/ROADMAP.md)
+- [docs/PROJECT_STATUS.md](/c:/Users/Andrejus/Documents/PROJEKTELIAI%20VS%20CODE/T%20analysis/tomis-rebuild/docs/PROJECT_STATUS.md)
+- [docs/GUI_REFERENCE.md](/c:/Users/Andrejus/Documents/PROJEKTELIAI%20VS%20CODE/T%20analysis/tomis-rebuild/docs/GUI_REFERENCE.md)
+- [docs/GUIDED_INTAKE_FLOW.md](/c:/Users/Andrejus/Documents/PROJEKTELIAI%20VS%20CODE/T%20analysis/tomis-rebuild/docs/GUIDED_INTAKE_FLOW.md)
+- [docs/SOURCE_WEB_IMPROVEMENT_PLAN.md](/c:/Users/Andrejus/Documents/PROJEKTELIAI%20VS%20CODE/T%20analysis/tomis-rebuild/docs/SOURCE_WEB_IMPROVEMENT_PLAN.md)
+
 ## Working Modules
 
 ### Auth and Shell

@@ -41,6 +41,7 @@ export const navigationGroups: NavigationGroup[] = [
       { label: "Operations", href: "/service" },
       { label: "Task Queue", href: "/service/tasks" },
       { label: "Reports", href: "/service/reports" },
+      { label: "Process Flow", href: "/service/process-flow" },
     ],
   },
   {
