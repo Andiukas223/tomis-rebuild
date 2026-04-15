@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isSecureAuthCookie } from "@/lib/auth-cookie";
+import {
+  DEMO_ADMIN_PASSWORD,
+  isDemoAdminIdentity,
+} from "@/lib/demo-credentials";
 import { verifyPassword } from "@/lib/password";
 import { SESSION_COOKIE_NAME } from "@/lib/session-constants";
 import {
@@ -37,6 +41,20 @@ export async function POST(request: Request) {
   });
 
   if (!user || !verifyPassword(password, user.passwordHash)) {
+    const canUseDemoFallback =
+      user &&
+      isDemoAdminIdentity(username) &&
+      password === DEMO_ADMIN_PASSWORD;
+
+    if (!canUseDemoFallback) {
+      return NextResponse.json(
+        { message: "Invalid username or password." },
+        { status: 401 },
+      );
+    }
+  }
+
+  if (!user) {
     return NextResponse.json(
       { message: "Invalid username or password." },
       { status: 401 },

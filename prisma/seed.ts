@@ -3,6 +3,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import {
+  DEMO_ADMIN_PASSWORD,
+  DEMO_ADMIN_USERNAME,
+} from "../src/lib/demo-credentials";
 import { hashPassword } from "../src/lib/password";
 
 const connectionString = process.env.DATABASE_URL;
@@ -38,10 +42,10 @@ async function main() {
   });
 
   const adminPassword =
-    process.env.SEED_ADMIN_PASSWORD ?? "dev-admin-pass";
+    process.env.SEED_ADMIN_PASSWORD ?? DEMO_ADMIN_PASSWORD;
 
   await db.user.upsert({
-    where: { username: "anlo" },
+    where: { username: DEMO_ADMIN_USERNAME },
     update: {
       email: "anlo@tradintek.local",
       fullName: "Andrejus Lomovas",
@@ -51,7 +55,7 @@ async function main() {
       passwordHash: hashPassword(adminPassword),
     },
     create: {
-      username: "anlo",
+      username: DEMO_ADMIN_USERNAME,
       email: "anlo@tradintek.local",
       fullName: "Andrejus Lomovas",
       role: "Administrator",
@@ -1425,7 +1429,7 @@ async function main() {
   }
 
   console.log("Seed complete.");
-  console.log("Admin username: anlo");
+  console.log(`Admin username: ${DEMO_ADMIN_USERNAME}`);
   console.log(`Admin password: ${adminPassword}`);
 }
 

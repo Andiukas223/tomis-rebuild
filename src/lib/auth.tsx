@@ -7,7 +7,7 @@ type AuthContextValue = {
   user: SessionUser | null;
   isAuthenticated: boolean;
   isReady: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -74,12 +74,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
         if (!response.ok) {
-          return false;
+          const data = (await response.json().catch(() => null)) as { message?: string } | null;
+          return {
+            success: false,
+            message: data?.message ?? "Invalid username or password.",
+          };
         }
 
         const data = (await response.json()) as { user: SessionUser };
         setUser(data.user);
-        return true;
+        return { success: true };
       },
       async logout() {
         await fetch("/api/auth/logout", {

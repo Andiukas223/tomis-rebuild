@@ -4,6 +4,10 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import {
+  DEMO_ADMIN_PASSWORD,
+  DEMO_ADMIN_USERNAME,
+} from "@/lib/demo-credentials";
 
 export function LoginForm({ nextPath }: { nextPath: string }) {
   const router = useRouter();
@@ -11,7 +15,27 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [copyMessage, setCopyMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  const handleCopyDemoCredentials = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        `Username: ${DEMO_ADMIN_USERNAME}\nPassword: ${DEMO_ADMIN_PASSWORD}`,
+      );
+      setCopyMessage("Copied demo credentials to clipboard.");
+    } catch {
+      setCopyMessage("Copy failed. Please copy the credentials manually.");
+    }
+
+    window.setTimeout(() => setCopyMessage(""), 3000);
+  };
+
+  const fillDemoCredentials = () => {
+    setUsername(DEMO_ADMIN_USERNAME);
+    setPassword(DEMO_ADMIN_PASSWORD);
+    setCopyMessage("");
+  };
 
   if (isReady && isAuthenticated) {
     return (
@@ -37,10 +61,10 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
         setError("");
 
         startTransition(async () => {
-          const success = await login(username, password);
+          const result = await login(username, password);
 
-          if (!success) {
-            setError("Please enter both username and password.");
+          if (!result.success) {
+            setError(result.message ?? "Please enter both username and password.");
             return;
           }
 
@@ -72,6 +96,40 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
           className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
           placeholder="Enter your password"
         />
+      </div>
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
+        <p className="font-medium text-slate-900">Demo account</p>
+        <p className="mt-2">
+          Username:{" "}
+          <span className="font-mono font-semibold text-slate-950">
+            {DEMO_ADMIN_USERNAME}
+          </span>
+        </p>
+        <p>
+          Password:{" "}
+          <span className="font-mono font-semibold text-slate-950">
+            {DEMO_ADMIN_PASSWORD}
+          </span>
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={fillDemoCredentials}
+            className="inline-flex items-center rounded-full bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Fill demo credentials
+          </button>
+          <button
+            type="button"
+            onClick={handleCopyDemoCredentials}
+            className="inline-flex items-center rounded-full bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Copy credentials
+          </button>
+        </div>
+        {copyMessage ? (
+          <p className="mt-2 text-xs text-slate-500">{copyMessage}</p>
+        ) : null}
       </div>
       <div className="flex items-center justify-between text-sm">
         <label className="flex items-center gap-2 text-slate-600">
